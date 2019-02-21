@@ -224,18 +224,29 @@ describe("Flighty", () => {
       api.clearInterceptors();
     });
 
-    it("should register an interceptor", async () => {
+    it("should throw if a falsy interceptor is registered", () => {
+      expect(() => api.interceptor.register(null)).toThrow();
+    });
+
+    it("should register an interceptor", () => {
       const interceptor = { request: jest.fn() };
       api.interceptor.register(interceptor);
-      // 2 because the "standard" interceptor included with flighty will remain
       expect(api.interceptors.size).toBe(1);
     });
 
-    it("should remove an interceptor", async () => {
+    it("should remove an interceptor via it's callback", () => {
       const interceptor = { request: jest.fn() };
       const deregister = api.interceptor.register(interceptor);
       expect(api.interceptors.size).toBe(1);
       deregister();
+      expect(api.interceptors.size).toBe(0);
+    });
+
+    it("should remove an interceptor via unregister", () => {
+      const interceptor = { request: jest.fn() };
+      const deregister = api.interceptor.register(interceptor);
+      expect(api.interceptors.size).toBe(1);
+      api.interceptor.unregister(interceptor);
       expect(api.interceptors.size).toBe(0);
     });
 
@@ -252,14 +263,44 @@ describe("Flighty", () => {
       expect(api.interceptors.size).toBe(0);
     });
 
-    it("should call requestInterceptor", async () => {
+    it("should call request interceptor", async () => {
+      const path = "/";
+      const options = { opt: "opt" };
+      const extra = { extra: "extra" };
       const interceptor = {
-        request: ({ path, options }) => ({ path, options })
+        request: ({ ...args }) => args
       };
       jest.spyOn(interceptor, "request");
       api.interceptor.register(interceptor);
-      const res = await api.get("/");
-      expect(interceptor.request).toHaveBeenCalled();
+      const res = await api.get(path, options, extra);
+      expect(interceptor.request).toHaveBeenCalledWith({
+        path,
+        options,
+        extra: {
+          ...extra,
+          retry: 0
+        }
+      });
+    });
+
+    it("should call response interceptor ", async () => {
+      const path = "/";
+      const options = { opt: "opt" };
+      const extra = { extra: "extra" };
+      const response = "some response";
+      fetch.mockResponseOnce(response);
+      const interceptor = {
+        response: ({ ...args }) => ({ path, options })
+      };
+      jest.spyOn(interceptor, "response");
+      api.interceptor.register(interceptor);
+      const res = await api.get(path, options, extra);
+      const firstCallArgs = interceptor.response.mock.calls[0][0];
+      expect(firstCallArgs.retry).toBeTruthy();
+      expect(firstCallArgs.extra).toEqual(
+        expect.objectContaining({ ...extra })
+      );
+      expect(firstCallArgs.res).toBeTruthy();
     });
 
     it("should not call fetch if an error is thrown in the requestInterceptor", async () => {

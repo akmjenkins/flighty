@@ -60,10 +60,20 @@ const call = async (method, context, { path, options }, extra = {}) => {
     context.abortTokenMap
   );
 
+  extra.retry = extra.retry || 0;
+  const retry = () => {
+    return call(
+      method,
+      context,
+      { path, options },
+      { ...extra, retry: extra.retry + 1 }
+    );
+  };
+
   const interceptors = Array.from(context.interceptors);
   const req = asyncReduce(
     interceptors,
-    Promise.resolve({ path, options }),
+    Promise.resolve({ path, options, extra }),
     "request",
     "requestError"
   );
@@ -72,7 +82,12 @@ const call = async (method, context, { path, options }, extra = {}) => {
     interceptors.reverse(),
     (async () => {
       const { path, options } = await req;
-      return doFetch(method, context, path, options);
+      const res = doFetch(method, context, path, options);
+      return {
+        res: await res,
+        retry,
+        extra
+      };
     })(),
     "response",
     "responseError"
@@ -84,21 +99,7 @@ const call = async (method, context, { path, options }, extra = {}) => {
 
   teardownAbort(options.abortToken, context.abortTokenMap);
 
-  extra.retry = extra.retry || 0;
-  const retry = () => {
-    return call(
-      method,
-      context,
-      { path, options },
-      { ...extra, retry: extra.retry + 1 }
-    );
-  };
-
-  return {
-    res: await res,
-    retry,
-    extra
-  };
+  return res;
 };
 
 export default class Flighty {
@@ -106,8 +107,8 @@ export default class Flighty {
     // add the methods
     METHODS.forEach(
       method =>
-        (this[method.toLowerCase()] = (path = "/", options = {}) =>
-          call(method, this, { path, options }))
+        (this[method.toLowerCase()] = (path = "/", options = {}, extra = {}) =>
+          call(method, this, { path, options }, extra))
     );
 
     let localAbortController;
@@ -139,14 +140,6 @@ export default class Flighty {
             ...options,
             baseURI
           };
-        }
-      },
-      opts: {
-        get() {
-          return options;
-        },
-        set(opts = {}) {
-          options = { ...opts };
         }
       },
       interceptors: {
@@ -189,10 +182,7 @@ export default class Flighty {
 
   abort(token) {
     const val = this.abortTokenMap.get(token);
-    if (!val) {
-      return;
-    }
-    val.controller.abort();
+    return val && val.controller.abort();
   }
 
   abortAll() {
