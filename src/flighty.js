@@ -53,7 +53,7 @@ const doFetch = (method, context, path, options) => {
   return fetch(fullUri, opts);
 };
 
-const call = async (method, context, { path, options }) => {
+const call = async (method, context, { path, options }, extra = {}) => {
   options.signal = setupAbort(
     options,
     context.abortController,
@@ -84,7 +84,21 @@ const call = async (method, context, { path, options }) => {
 
   teardownAbort(options.abortToken, context.abortTokenMap);
 
-  return res;
+  extra.retry = extra.retry || 0;
+  const retry = () => {
+    return call(
+      method,
+      context,
+      { path, options },
+      { ...extra, retry: extra.retry + 1 }
+    );
+  };
+
+  return {
+    res: await res,
+    retry,
+    extra
+  };
 };
 
 export default class Flighty {

@@ -35,6 +35,29 @@ describe("Flighty", () => {
     });
   });
 
+  it("should allow a retry", async () => {
+    const first = "first";
+    const second = "second";
+    const third = "third";
+
+    fetch
+      .mockResponseOnce(first)
+      .mockResponseOnce(second)
+      .mockResponseOnce(third);
+
+    const resOne = await api.get("/");
+    const resTwo = await resOne.retry();
+    const resThree = await resTwo.retry();
+
+    expect(await resOne.res.text()).toBe(first);
+    expect(await resTwo.res.text()).toBe(second);
+    expect(await resThree.res.text()).toBe(third);
+
+    expect(resOne.extra).toEqual(expect.objectContaining({ retry: 0 }));
+    expect(resTwo.extra).toEqual(expect.objectContaining({ retry: 1 }));
+    expect(resThree.extra).toEqual(expect.objectContaining({ retry: 2 }));
+  });
+
   it("should remove empty headers", async () => {
     const path = "/";
     const res = await api.get(path, {
