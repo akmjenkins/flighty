@@ -75,7 +75,7 @@ Aborting Fetch requests comes with a hairy, verbose [AbortController](https://de
     // AbortError!
   }
 
-```js
+```
 Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` to cancel the request.
 
 ```
