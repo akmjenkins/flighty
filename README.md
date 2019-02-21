@@ -14,7 +14,7 @@ Flighty weighs a hefty 5.8kb minified and gzipped (14.7kb without the gzip) with
 
 If you want to polyfill fetch it'll cost you bigly - a total of 8.3kb (minified and gzipped) - 22.9kb without the gzip!.
 
-## Use it in Unit testing
+## Use it in unit testing
 
 The more mocks in your unit tests the worse so here's a thing - don't mock Flighty! Rather than create mocks of fetch-wrapping libraries and functionality, why not just mock the only thing you should need to - the fetch itself? I recommend [jest-fetch-mock](https://www.npmjs.com/package/jest-fetch-mock).
 
@@ -22,7 +22,7 @@ The more mocks in your unit tests the worse so here's a thing - don't mock Fligh
 
 **_Drop in replacement_** for fetch (we're still using fetch, just wrapping it) This works:
 
-```
+```js
 const res = await fetch('/somepath',{some options});
 
 const api = new Flighty({some options});
@@ -33,8 +33,7 @@ This works because Flighty returns the standard [Response](https://developer.moz
 
 ### flighty object
 
-```
-
+```js
 res.flighty = {
   method, // the method you called with
   retryCount, // the number of times this request has been retried
@@ -60,12 +59,11 @@ res.flighty = {
 
 ### Easy Abort
 
-Frisbee comes with two abort APIs. `abortAll()` which cancels all ongoing requests and cancellation via an `abortToken` (similar to [axios cancellation token](https://github.com/axios/axios#cancellation) but easier!).
+Flighty comes with two abort APIs. `abortAll()` which cancels all ongoing requests and cancellation via an `abortToken` (similar to [axios cancellation token](https://github.com/axios/axios#cancellation) but easier!).
 
 Aborting Fetch requests comes with a hairy, verbose [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) API that requires you to construct, pass in a signal to the fetch, and then abort the controller like so:
 
-```
-
+```js
   const controller = new AbortController();
   const req = fetch('/',{controller.signal})
 
@@ -77,8 +75,7 @@ Aborting Fetch requests comes with a hairy, verbose [AbortController](https://de
     // AbortError!
   }
 
-```
-
+```js
 Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` to cancel the request.
 
 ```
@@ -149,8 +146,7 @@ responseError: function (err) {
     // Handle error occurred in the last ran requestInterceptor, or the fetch itself
     return Promise.reject(err);
 }
-```
-
+```js
 ### Retries
 
 I've found retries (combined with response interceptors) to be invaluable when working with [JWTs](https://jwt.io/). Get a 401 from your API? Intercept it in the response, get a new accessToken and then retry the request.
@@ -178,7 +174,11 @@ I've found retries (combined with response interceptors) to be invaluable when w
 
 Upon being invoked, `Flighty` has the following methods
 
-* `api.jwt(token)` - Set your Bearer Authorization header via this method. Pass in a token and Flighty will add the header for you, pass in something false-y and Flighty won't automatically add an auth header (in case you want to do it yourself)
+* `jwt(token)` - Set your Bearer Authorization header via this method. Pass in a token and Flighty will add the header for you, pass in something false-y and Flighty won't automatically add an auth header (in case you want to do it yourself)
+
+* `abort` - method that accepts an abortToken to abort specific requests.
+
+* `abortAll` - aborts all in-progress requests controlled by this instance.
 
 * HTTP wrapper methods (e.g. get, post, put, delete, etc) require a `path` string, and accept two optional plain object arguments - `options` and `extra`
 
@@ -216,10 +216,6 @@ Upon being invoked, `Flighty` has the following methods
 
 For convenience, Flighty has exposed an `interceptor` property that has the same API as frisbee to register and unregister interceptors.
 
-* `abort` - method that accepts an abortToken to abort specific requests.
-
-* `abortAll` - aborts all in-progress requests controlled by this instance.
-
 
 ### Throw if not 2xx recipe
 
@@ -249,7 +245,7 @@ api.registerInterceptor({
   }
 });
 
-// Now all my responses throw if I get a crap response
+// Now all my responses throw if I get a non-2xx response
 try {
   const res = api.get('/');
 } catch(e) {
@@ -259,8 +255,7 @@ try {
 
 ### JWT Recipe with Retries and Interceptors
 
-```
-
+```js
 const api = new Flighty();
 
 const interceptor = {
