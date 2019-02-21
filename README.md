@@ -98,7 +98,7 @@ Tokens, like AbortController signals, can be used to abort multiple requests, bu
 
 Like signals, a single abortToken can cancel multiple requests!
 
-```
+```js
  const abortToken = "some token";
  const reqOne = flighty('/pathone',{abortToken})
  const reqTwo = flighty('/pathtwo',{abortToken})
@@ -108,6 +108,7 @@ Like signals, a single abortToken can cancel multiple requests!
  flighty.abort(abortToken);
 
 ```
+
 
 ### Interceptors
 
@@ -215,13 +216,9 @@ Upon being invoked, `Flighty` has the following methods
 
 For convenience, Flighty has exposed an `interceptor` property that has the same API as frisbee to register and unregister interceptors.
 
-* `interceptor` - object that can be used to manipulate request and response interceptors. It has the following methods:
+* `abort` - method that accepts an abortToken to abort specific requests.
 
-  * `api.interceptor.register(interceptor)`:
-
-  * `api.interceptor.unregister(interceptor)`:
-
-  * `api.interceptor.clear()`:
+* `abortAll` - aborts all in-progress requests controlled by this instance.
 
 
 ### Throw if not 2xx recipe
