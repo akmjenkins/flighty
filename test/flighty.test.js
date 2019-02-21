@@ -1,4 +1,4 @@
-import Flighty from "flighty";
+import Flighty from "../src/flighty";
 import qs from "qs";
 
 describe("Flighty", () => {
@@ -9,19 +9,20 @@ describe("Flighty", () => {
   beforeEach(() => {
     api = new Flighty({ headers });
     fetch.resetMocks();
+    fetch.mockResponse("something");
   });
 
   test("should be truthy", () => {
     expect(Flighty).toBeTruthy();
   });
 
-  ["get", "post", "head", "put", "options", "delete"].forEach(method => {
+  ["get", "post", "head", "put", "options", "delete","patch"].forEach(method => {
     test("should handle " + method, async () => {
       const path = "/somepath";
       const result = { test: "done" };
       fetch.mockResponseOnce(JSON.stringify(result));
 
-      const { res } = await api[method](path);
+      const res = await api[method](path);
       const json = await res.json();
       expect(json).toEqual(result);
       expect(fetch).toHaveBeenCalledWith(
@@ -34,15 +35,72 @@ describe("Flighty", () => {
     });
   });
 
-  it("should put json/text data in 'extra'", async () => {
+  test("should hang a 'flighty' object off the response containing json, text, original call to flighty, intercepted values, retry method and retryCount", async () => {
+    const path = "/";
+    const result = { test: "done" };
+    const myOptions = { opt1: "one" };
+    const myExtra = { extra: "something extra" };
+    fetch.mockResponseOnce(JSON.stringify(result));
+
+    const res = await api.get(path, myOptions, myExtra);
+
+    expect(res.flighty).toBeTruthy();
+    expect(res.flighty.retry).toBeTruthy();
+    expect(res.flighty.json).toEqual(result);
+    expect(res.flighty.text).toEqual(JSON.stringify(result));
+    expect(res.flighty.call).toEqual({
+      options: myOptions,
+      extra: myExtra,
+      path
+    });
+    expect(res.flighty.intercepted).toEqual({
+      options: myOptions,
+      extra: myExtra,
+      path
+    });
+
+    fetch.mockResponseOnce(JSON.stringify(result));
+    await expect(res.flighty.retry()).resolves.toBeTruthy();
+  });
+
+  test("should accurately return the number of times a request has been retried", async () => {
+    const path = "/";
+    const result = { test: "done" };
+    const myOptions = { opt1: "one" };
+    const myExtra = { extra: "something extra" };
+    fetch
+      .mockResponseOnce(JSON.stringify(result))
+      .mockResponseOnce(JSON.stringify(result))
+      .mockResponseOnce(JSON.stringify(result))
+      .mockResponseOnce(JSON.stringify(result))
+      .mockResponseOnce(JSON.stringify(result));
+
+    const res = await api.get(path, myOptions, myExtra);
+    const resTwo = await res.flighty.retry();
+    const resThree = await resTwo.flighty.retry();
+    const resFour = await resThree.flighty.retry();
+    const resFromOneAgain = await res.flighty.retry();
+
+    expect(res.flighty.retryCount).toBe(0);
+    expect(resTwo.flighty.retryCount).toBe(1);
+    expect(resThree.flighty.retryCount).toBe(2);
+    expect(resFour.flighty.retryCount).toBe(3);
+
+    // tricky - it was resTwo is when it was retried once
+    // resFromOneAgain is when it was retried a second time
+    expect(resFromOneAgain.flighty.retryCount).toBe(2);
+  });
+
+  test("should put json/text data in 'flighty'", async () => {
     const result = { test: "done" };
     const myExtra = {};
     fetch.mockResponseOnce(JSON.stringify(result));
-    const { extra } = await api.get("/", {}, myExtra);
-    expect(extra.json).toEqual(result);
+    const res = await api.get("/", {}, myExtra);
+
+    expect(res.flighty.json).toEqual(result);
   });
 
-  it("should not modify the original 'extra' paramater", async () => {
+  test("should not modify the original 'extra' paramater", async () => {
     const result = { test: "done" };
     const myExtra = {};
     const originalExtra = { ...myExtra };
@@ -51,30 +109,7 @@ describe("Flighty", () => {
     expect(originalExtra).toEqual(myExtra);
   });
 
-  it("should allow a retry", async () => {
-    const first = "first";
-    const second = "second";
-    const third = "third";
-
-    fetch
-      .mockResponseOnce(first)
-      .mockResponseOnce(second)
-      .mockResponseOnce(third);
-
-    const resOne = await api.get("/");
-    const resTwo = await resOne.retry();
-    const resThree = await resTwo.retry();
-
-    expect(await resOne.res.text()).toBe(first);
-    expect(await resTwo.res.text()).toBe(second);
-    expect(await resThree.res.text()).toBe(third);
-
-    expect(resOne.extra).toEqual(expect.objectContaining({ retry: 0 }));
-    expect(resTwo.extra).toEqual(expect.objectContaining({ retry: 1 }));
-    expect(resThree.extra).toEqual(expect.objectContaining({ retry: 2 }));
-  });
-
-  it("should remove empty headers", async () => {
+  test("should remove empty headers", async () => {
     const path = "/";
     const res = await api.get(path, {
       headers: {
@@ -87,7 +122,7 @@ describe("Flighty", () => {
     expect(fetch.mock.calls[0][1].headers).toHaveProperty("Date");
   });
 
-  it("should convert body to querystring when using get", async () => {
+  test("should convert body to querystring when using get", async () => {
     const body = {
       param: "value",
       arr: ["first", "second", "third"]
@@ -107,7 +142,7 @@ describe("Flighty", () => {
     expect(fetch.mock.calls[0][1]).not.toHaveProperty("body");
   });
 
-  it("should add an empty body to a post request that doesn't have one", async () => {
+  test("should add an empty body to a post request that doesn't have one", async () => {
     await api.post("/");
     expect(fetch.mock.calls[0][1]).toEqual(
       expect.objectContaining({
@@ -116,7 +151,7 @@ describe("Flighty", () => {
     );
   });
 
-  it("should convert object body to string", async () => {
+  test("should convert object body to string", async () => {
     const body = { param1: "value", arr: [1, 2, 3, 4] };
     const expected = JSON.stringify(body);
     await api.post("/", { body });
@@ -127,7 +162,7 @@ describe("Flighty", () => {
     );
   });
 
-  it("should combine baseURI with path", async () => {
+  test("should combine baseURI with path", async () => {
     const baseURI = "http://localhost";
     const path = "/somepath";
     api.baseURI = baseURI;
@@ -135,7 +170,7 @@ describe("Flighty", () => {
     expect(fetch.mock.calls[0][0]).toEqual(baseURI + path);
   });
 
-  it("should add a JWT header", async () => {
+  test("should add a JWT header", async () => {
     api.jwt("some token");
     const res = await api.get("/");
     expect(fetch.mock.calls[0][1].headers).toHaveProperty("Authorization");
@@ -144,14 +179,14 @@ describe("Flighty", () => {
     );
   });
 
-  it("should remove a JWT header", async () => {
+  test("should remove a JWT header", async () => {
     api.jwt();
     const res = await api.get("/");
     expect(fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
   });
 
   describe("abort", () => {
-    it("should abort when abortAll() is called", async () => {
+    test("should abort when abortAll() is called", async () => {
       const req = api.get("/");
       api.abortAll();
       const res = await req;
@@ -159,7 +194,7 @@ describe("Flighty", () => {
       expect(api.abortTokenMap.size).toBe(0);
     });
 
-    it("should abort when abort() is called with token", async () => {
+    test("should abort when abort() is called with token", async () => {
       const abortToken = "some token";
       const req = api.get("/", { abortToken });
       api.abort(abortToken);
@@ -168,7 +203,7 @@ describe("Flighty", () => {
       expect(api.abortTokenMap.size).toBe(0);
     });
 
-    it("should abort when using abortAll() with a token request", async () => {
+    test("should abort when using abortAll() with a token request", async () => {
       const abortToken = "some token";
       const req = api.get("/", { abortToken });
       api.abortAll();
@@ -177,7 +212,7 @@ describe("Flighty", () => {
       expect(api.abortTokenMap.size).toBe(0);
     });
 
-    it("should only abort a single request when abort is called with token", async () => {
+    test("should only abort a single request when abort is called with token", async () => {
       const abortToken = "some token";
       const abortTokenTwo = "some token two";
       const reqOne = api.get("/", { abortToken });
@@ -189,13 +224,13 @@ describe("Flighty", () => {
       expect(api.abortTokenMap.size).toBe(0);
     });
 
-    it("should allow further requests after abortAll has been called", async () => {
+    test("should allow further requests after abortAll has been called", async () => {
       api.abortAll();
       const res = await api.get("/");
       expect(fetch.mock.calls[0][1].signal.aborted).toBeFalsy();
     });
 
-    it("should abort all requests with the same token", async () => {
+    test("should abort all requests with the same token", async () => {
       const abortToken = "some token";
       const reqOne = api.get("/", { abortToken });
       const reqTwo = api.get("/", { abortToken });
@@ -210,7 +245,7 @@ describe("Flighty", () => {
       expect(api.abortTokenMap.size).toBe(0);
     });
 
-    it("should empty the abortTokenMap when all requests using the same token have completed", async () => {
+    test("should empty the abortTokenMap when all requests using the same token have completed", async () => {
       const delay = to =>
         fetch.mockResponseOnce(
           () => new Promise(res => setTimeout(() => res(1), to))
@@ -240,17 +275,17 @@ describe("Flighty", () => {
       api.clearInterceptors();
     });
 
-    it("should throw if a falsy interceptor is registered", () => {
+    test("should throw if a falsy interceptor is registered", () => {
       expect(() => api.interceptor.register(null)).toThrow();
     });
 
-    it("should register an interceptor", () => {
+    test("should register an interceptor", () => {
       const interceptor = { request: jest.fn() };
       api.interceptor.register(interceptor);
       expect(api.interceptors.size).toBe(1);
     });
 
-    it("should remove an interceptor via it's callback", () => {
+    test("should remove an interceptor via it's callback", () => {
       const interceptor = { request: jest.fn() };
       const deregister = api.interceptor.register(interceptor);
       expect(api.interceptors.size).toBe(1);
@@ -258,7 +293,7 @@ describe("Flighty", () => {
       expect(api.interceptors.size).toBe(0);
     });
 
-    it("should remove an interceptor via unregister", () => {
+    test("should remove an interceptor via unregister", () => {
       const interceptor = { request: jest.fn() };
       const deregister = api.interceptor.register(interceptor);
       expect(api.interceptors.size).toBe(1);
@@ -266,7 +301,7 @@ describe("Flighty", () => {
       expect(api.interceptors.size).toBe(0);
     });
 
-    it("should clear interceptors", async () => {
+    test("should clear interceptors", async () => {
       const interceptorOne = { request: jest.fn() };
       const interceptorTwo = { request: jest.fn() };
       const interceptorThree = { request: jest.fn() };
@@ -279,71 +314,111 @@ describe("Flighty", () => {
       expect(api.interceptors.size).toBe(0);
     });
 
-    it("should call request interceptor", async () => {
+    test("should call request interceptor", async () => {
       const path = "/";
       const options = { opt: "opt" };
       const extra = { extra: "extra" };
-      const interceptor = {
-        request: ({ ...args }) => args
-      };
+      const interceptor = { request: (...args) => args };
       jest.spyOn(interceptor, "request");
       api.interceptor.register(interceptor);
       const res = await api.get(path, options, extra);
-      expect(interceptor.request).toHaveBeenCalledWith({
-        path,
-        options,
-        extra: {
-          ...extra,
-          retry: 0
-        }
-      });
+      const firstCallArgs = interceptor.request.mock.calls[0];
+      expect(firstCallArgs[0]).toEqual(path);
+      expect(firstCallArgs[1]).toEqual(options);
+      expect(firstCallArgs[2]).toEqual(extra);
     });
 
-    it("should call response interceptor ", async () => {
+    test("should call response interceptor ", async () => {
       const path = "/";
       const options = { opt: "opt" };
       const extra = { extra: "extra" };
       const response = "some response";
       fetch.mockResponseOnce(response);
       const interceptor = {
-        response: ({ ...args }) => ({ path, options })
+        response: jest.fn()
       };
       jest.spyOn(interceptor, "response");
       api.interceptor.register(interceptor);
       const res = await api.get(path, options, extra);
       const firstCallArgs = interceptor.response.mock.calls[0][0];
-      expect(firstCallArgs.retry).toBeTruthy();
-      expect(firstCallArgs.extra).toEqual(
-        expect.objectContaining({ ...extra })
-      );
-      expect(firstCallArgs.res).toBeTruthy();
+      expect(firstCallArgs.flighty).toBeTruthy();
     });
 
-    it("should not call fetch if an error is thrown in the requestInterceptor", async () => {
+    test("should correctly pass extra and retryCount to request interceptors", async () => {
+      const path = "/";
+      const options = { opt1: "option" };
+      const extra = { extra: "stuff" };
+      const firstInterceptor = {
+        request: (path, options, extra, retryCount) => {
+          return [
+            path,
+            options,
+            { ...extra, modified: "modified" },
+            ++retryCount
+          ];
+        }
+      };
+      const secondInterceptor = {
+        request: (...args) => args
+      };
+      api.interceptor.register(firstInterceptor);
+      api.interceptor.register(secondInterceptor);
+
+      jest.spyOn(firstInterceptor, "request");
+      jest.spyOn(secondInterceptor, "request");
+      const res = await api.get(path, options, extra);
+
+      expect(firstInterceptor.request).toHaveBeenCalledWith(
+        path,
+        options,
+        extra,
+        0
+      );
+
+      expect(secondInterceptor.request).toHaveBeenCalledWith(
+        path,
+        options,
+        extra,
+        0
+      );
+
+      const resTwo = await res.flighty.retry();
+      expect(firstInterceptor.request).toHaveBeenCalledWith(
+        path,
+        options,
+        extra,
+        1
+      );
+
+      await resTwo.flighty.retry();
+      expect(firstInterceptor.request).toHaveBeenCalledWith(
+        path,
+        options,
+        extra,
+        2
+      );
+    });
+
+    test("should correctly set intercepted data on flighty object", async () => {});
+
+    test("should not call fetch if an error is thrown in the requestInterceptor", async () => {
       const error = "some specific error";
       const interceptor = {
-        request: ({ path, options }) => Promise.reject(error)
+        request: (...args) => Promise.reject(error)
       };
 
       api.interceptor.register(interceptor);
 
-      try {
-        await api.get("/");
-        // hackish
-        expect(true).toBeFalsy();
-      } catch (err) {
-        expect(err).toBe(error);
-      }
-
+      await expect(api.get("/")).rejects.toEqual(error);
       expect(fetch).not.toHaveBeenCalled();
     });
 
-    it("should call request interceptors in first -> second -> third", async () => {
+    test("should call request interceptors in first -> second -> third", async () => {
       const firstInterceptor = {
-        request: ({ path, options }) => ({ path, options })
+        request: (...args) => args
       };
       const secondInterceptor = {
-        request: ({ path, options }) => Promise.reject("error")
+        request: (...args) => Promise.reject("error")
       };
       const thirdInterceptor = { requestError: err => Promise.reject(err) };
 
@@ -366,7 +441,7 @@ describe("Flighty", () => {
       ).toBeLessThan(thirdInterceptor.requestError.mock.invocationCallOrder[0]);
     });
 
-    it("should call response interceptors in third -> second -> first", async () => {
+    test("should call response interceptors in third -> second -> first", async () => {
       fetch.mockResponseOnce(JSON.stringify("some response"));
       const firstInterceptor = {
         responseError: err => {
@@ -399,14 +474,14 @@ describe("Flighty", () => {
       ).toBeGreaterThan(thirdInterceptor.response.mock.invocationCallOrder[0]);
     });
 
-    it("should call interceptors as request -> requestError -> responseError -> response", async () => {
+    test("should call interceptors as request -> requestError -> responseError -> response", async () => {
       const r = { response: "some response" };
       const finalResponse = new Response(JSON.stringify(r));
       const firstInterceptor = {
-        request: ({ path, options }) => Promise.reject("error")
+        request: args => Promise.reject("error")
       };
       const secondInterceptor = {
-        requestError: err => ({ path: "/", options: {} })
+        requestError: err => ["/", {}]
       };
       const thirdInterceptor = {
         responseError: err => finalResponse

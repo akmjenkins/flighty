@@ -10,10 +10,10 @@ export default [
   {
     input: "src/flighty.js",
     output: {
-      file: "lib/flighty.min.js",
+      file: "dist/flighty.min.js",
       format: "iife",
       name: "flighty",
-      globals: { flighty: "flighty" },
+      globals: { flighty: "Flighty" },
       sourcemap: true
     },
     external: [],
@@ -23,10 +23,10 @@ export default [
   {
     input: "src/flighty.fetch.js",
     output: {
-      file: "lib/flighty.fetch.min.js",
+      file: "dist/flighty.fetch.min.js",
       format: "iife",
       name: "flighty",
-      globals: { flighty: "flighty" },
+      globals: { flighty: "Flighty" },
       sourcemap: true
     },
     external: [],
@@ -36,7 +36,7 @@ export default [
   {
     input: "src/flighty.js",
     output: {
-      file: "lib/flighty.js",
+      file: "dist/flighty.js",
       format: "cjs",
       indent: false,
       exports: "named"

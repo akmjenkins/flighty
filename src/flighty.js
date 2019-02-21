@@ -15,7 +15,7 @@ if (typeof AbortController === "undefined") {
   );
 }
 
-const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE"];
+const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE", "PATCH"];
 
 const doFetch = (method, context, path, options) => {
   // keep abortToken out of the fetch params
@@ -53,53 +53,84 @@ const doFetch = (method, context, path, options) => {
   return fetch(fullUri, opts);
 };
 
-const call = async (method, context, { path, options }, { ...extra }) => {
-  options.signal = setupAbort(
+const call = async (
+  method,
+  context,
+  { path, options },
+  extra,
+  retryCount = 0
+) => {
+  // don't let the interceptors modify the abort signal - it's the one
+  // attached to flighty's abortController so if they do, it will break our
+  // "abortAll" method
+  const signal = setupAbort(
     options,
     context.abortController,
     context.abortTokenMap
   );
-
-  extra.retry = extra.retry || 0;
-  const retry = () => {
-    return call(
-      method,
-      context,
-      { path, options },
-      { ...extra, retry: extra.retry + 1 }
-    );
-  };
+  const originalOptions = { ...options };
+  const originalExtra = { ...extra };
+  const originalPath = path;
 
   const interceptors = Array.from(context.interceptors);
   const req = asyncReduce(
     interceptors,
-    Promise.resolve({ path, options, extra }),
+    Promise.resolve([path, options]),
     "request",
-    "requestError"
+    "requestError",
+    // don't let interceptors modify the extra or retryCount data
+    args => {
+      return args.slice(0, 2).concat([{ ...extra }, retryCount]);
+    }
   );
 
   const res = asyncReduce(
     interceptors.reverse(),
     (async () => {
-      const { path, options, extra } = await req;
-      const res = await doFetch(method, context, path, options);
+      // stuff from the interceptors
+      const [path, options] = await req;
+      const res = await doFetch(method, context, path, { ...options, signal });
+
+      res.flighty = {
+        method,
+        retryCount,
+        // the values flighty was called with
+        call: {
+          path: originalPath,
+          options: originalOptions,
+          extra: originalExtra
+        },
+        // the values that were returned from an interceptor - useful for debugging!
+        intercepted: {
+          path,
+          options: { ...options },
+          extra: { ...extra }
+        },
+        // retry method
+        retry: async () => {
+          retryCount++;
+          return await call(
+            method,
+            context,
+            { path: originalPath, options: originalOptions },
+            originalExtra,
+            retryCount
+          );
+        }
+      };
 
       // add in the json and text responses to extra to make life easier
       // for people - they can still await them if they want
       if (res) {
         try {
-          extra.json = await res.clone().json();
+          res.flighty.json = await res.clone().json();
         } catch (e) {}
         try {
-          extra.text = await res.clone().text();
+          res.flighty.text = await res.clone().text();
         } catch (e) {}
       }
 
-      return {
-        res,
-        retry,
-        extra
-      };
+      return res;
     })(),
     "response",
     "responseError"
@@ -164,7 +195,7 @@ export default class Flighty {
         get() {
           return {
             register: interceptor => this.registerInterceptor(interceptor),
-            unregister: interceptor => this.interceptors.delete(interceptor),
+            unregister: interceptor => this.removeInterceptor(interceptor),
             clear: () => this.clearInterceptors()
           };
         }
@@ -214,10 +245,16 @@ export default class Flighty {
     this.interceptors.clear();
   }
 
+  removeInterceptor(interceptor) {
+    this.interceptors.delete(interceptor);
+  }
+
   jwt(token) {
     this.headers = {
       ...this.headers,
       Authorization: token ? `Bearer ${token}` : null
     };
+    return this;
   }
+
 }

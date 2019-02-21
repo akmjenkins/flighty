@@ -13,12 +13,12 @@ describe("abort", () => {
       localController = new AbortController();
     });
 
-    it("should return the signal from the passed in controller if there is no abortToken or signal", () => {
+    test("should return the signal from the passed in controller if there is no abortToken or signal", () => {
       const signal = setupAbort({}, globalController, map);
       expect(signal).toBe(globalController.signal);
     });
 
-    it("should add the token to the map", () => {
+    test("should add the token to the map", () => {
       const signal = setupAbort({ abortToken }, globalController, map);
       const val = map.get(abortToken);
       expect(val).toBeTruthy();
@@ -26,14 +26,14 @@ describe("abort", () => {
       expect(val.count).toBe(1);
     });
 
-    it("should increment the map count if the same token is used", () => {
+    test("should increment the map count if the same token is used", () => {
       setupAbort({ abortToken }, globalController, map);
       setupAbort({ abortToken }, globalController, map);
       setupAbort({ abortToken }, globalController, map);
       expect(map.get(abortToken).count).toBe(3);
     });
 
-    it("should return the same signal if for identical tokens", () => {
+    test("should return the same signal if for identical tokens", () => {
       const signalOne = setupAbort({ abortToken }, globalController, map);
       const signalTwo = setupAbort({ abortToken }, globalController, map);
       const signalThree = setupAbort({ abortToken }, globalController, map);
@@ -42,13 +42,13 @@ describe("abort", () => {
       expect(signalTwo).toBe(signalThree);
     });
 
-    it("should trigger the returned signal when the globalController is aborted (token)", () => {
+    test("should trigger the returned signal when the globalController is aborted (token)", () => {
       const signal = setupAbort({ abortToken }, globalController, map);
       globalController.abort();
       expect(signal.aborted).toBe(true);
     });
 
-    it("should trigger the returned signal when the globalController is aborted (signal)", () => {
+    test("should trigger the returned signal when the globalController is aborted (signal)", () => {
       const signal = setupAbort(
         { signal: localController.signal },
         globalController,
@@ -58,7 +58,7 @@ describe("abort", () => {
       expect(signal.aborted).toBe(true);
     });
 
-    it("should trigger the returned signal when the passed in signal is aborted", () => {
+    test("should trigger the returned signal when the passed in signal is aborted", () => {
       const signal = setupAbort(
         { signal: localController.signal },
         globalController,
@@ -86,12 +86,12 @@ describe("abort", () => {
       map.set(tokenThree, mapValueThree);
     });
 
-    it("should decrement the count of the map", () => {
+    test("should decrement the count of the map", () => {
       teardownAbort(tokenTwo, map);
       expect(map.get(tokenTwo).count).toEqual(2);
     });
 
-    it("should delete from the map if the count is 0", () => {
+    test("should delete from the map if the count is 0", () => {
       teardownAbort(tokenOne, map);
       expect(map.get(tokenOne)).toBeFalsy();
     });
