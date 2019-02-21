@@ -1,6 +1,6 @@
 {
   "name": "flighty",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Inspired by Frisbee, Bring your own fetch/polyfill",
   "main": "lib/flighty.js",
   "module": "src/flighty.js",
