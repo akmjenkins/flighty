@@ -53,7 +53,7 @@ const doFetch = (method, context, path, options) => {
   return fetch(fullUri, opts);
 };
 
-const call = async (method, context, { path, options }, extra = {}) => {
+const call = async (method, context, { path, options }, { ...extra }) => {
   options.signal = setupAbort(
     options,
     context.abortController,
@@ -81,10 +81,22 @@ const call = async (method, context, { path, options }, extra = {}) => {
   const res = asyncReduce(
     interceptors.reverse(),
     (async () => {
-      const { path, options } = await req;
-      const res = doFetch(method, context, path, options);
+      const { path, options, extra } = await req;
+      const res = await doFetch(method, context, path, options);
+
+      // add in the json and text responses to extra to make life easier
+      // for people - they can still await them if they want
+      if (res) {
+        try {
+          extra.json = await res.clone().json();
+        } catch (e) {}
+        try {
+          extra.text = await res.clone().text();
+        } catch (e) {}
+      }
+
       return {
-        res: await res,
+        res,
         retry,
         extra
       };

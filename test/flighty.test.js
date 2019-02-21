@@ -24,7 +24,6 @@ describe("Flighty", () => {
       const { res } = await api[method](path);
       const json = await res.json();
       expect(json).toEqual(result);
-
       expect(fetch).toHaveBeenCalledWith(
         path,
         expect.objectContaining({
@@ -33,6 +32,23 @@ describe("Flighty", () => {
         })
       );
     });
+  });
+
+  it("should put json/text data in 'extra'", async () => {
+    const result = { test: "done" };
+    const myExtra = {};
+    fetch.mockResponseOnce(JSON.stringify(result));
+    const { extra } = await api.get("/", {}, myExtra);
+    expect(extra.json).toEqual(result);
+  });
+
+  it("should not modify the original 'extra' paramater", async () => {
+    const result = { test: "done" };
+    const myExtra = {};
+    const originalExtra = { ...myExtra };
+    fetch.mockResponseOnce(JSON.stringify(result));
+    const { extra } = await api.get("/", {}, myExtra);
+    expect(originalExtra).toEqual(myExtra);
   });
 
   it("should allow a retry", async () => {
