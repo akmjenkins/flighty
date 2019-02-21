@@ -78,7 +78,7 @@ Aborting Fetch requests comes with a hairy, verbose [AbortController](https://de
 ```
 Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` to cancel the request.
 
-```
+```js
   const abortToken = "my abort token";
   const req = flighty.get('/',{abortToken});
 
@@ -146,12 +146,12 @@ responseError: function (err) {
     // Handle error occurred in the last ran requestInterceptor, or the fetch itself
     return Promise.reject(err);
 }
-```js
+```
 ### Retries
 
 I've found retries (combined with response interceptors) to be invaluable when working with [JWTs](https://jwt.io/). Get a 401 from your API? Intercept it in the response, get a new accessToken and then retry the request.
 
-```
+```js
   let res;
   const api = new Flighty();
   res = await api.get('/');
