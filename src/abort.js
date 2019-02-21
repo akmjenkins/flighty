@@ -4,11 +4,7 @@ const teardownAbort = (token, map) => {
   }
 
   const val = map.get(token);
-  if (!val) {
-    return;
-  }
-
-  if (--val.count) {
+  if (!val || --val.count) {
     return;
   }
   map.delete(token);
