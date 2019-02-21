@@ -20,7 +20,8 @@ describe("Flighty", () => {
       const path = "/somepath";
       const result = { test: "done" };
       fetch.mockResponseOnce(JSON.stringify(result));
-      const res = await api[method](path);
+
+      const { res } = await api[method](path);
       const json = await res.json();
       expect(json).toEqual(result);
 
@@ -255,6 +256,67 @@ describe("Flighty", () => {
       }
 
       expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it("should call request interceptors in first -> second -> third", async () => {
+      const firstInterceptor = {
+        request: ({ path, options }) => ({ path, options })
+      };
+      const secondInterceptor = {
+        request: ({ path, options }) => Promise.reject("error")
+      };
+      const thirdInterceptor = { requestError: err => Promise.reject(err) };
+
+      api.interceptor.register(firstInterceptor);
+      api.interceptor.register(secondInterceptor);
+      api.interceptor.register(thirdInterceptor);
+
+      jest.spyOn(firstInterceptor, "request");
+      jest.spyOn(secondInterceptor, "request");
+      jest.spyOn(thirdInterceptor, "requestError");
+
+      await expect(api.get("/")).rejects.toBeTruthy();
+
+      expect(firstInterceptor.request.mock.invocationCallOrder[0]).toBeLessThan(
+        secondInterceptor.request.mock.invocationCallOrder[0]
+      );
+
+      expect(
+        secondInterceptor.request.mock.invocationCallOrder[0]
+      ).toBeLessThan(thirdInterceptor.requestError.mock.invocationCallOrder[0]);
+    });
+
+    it("should call response interceptors in third -> second -> first", async () => {
+      fetch.mockResponseOnce(JSON.stringify("some response"));
+      const firstInterceptor = {
+        responseError: err => {
+          throw err;
+        }
+      };
+      const secondInterceptor = {
+        response: res => {
+          throw res;
+        }
+      };
+      const thirdInterceptor = { response: res => res };
+
+      api.interceptor.register(firstInterceptor);
+      api.interceptor.register(secondInterceptor);
+      api.interceptor.register(thirdInterceptor);
+
+      jest.spyOn(firstInterceptor, "responseError");
+      jest.spyOn(secondInterceptor, "response");
+      jest.spyOn(thirdInterceptor, "response");
+
+      await expect(api.get("/")).rejects.toBeTruthy();
+
+      expect(
+        firstInterceptor.responseError.mock.invocationCallOrder[0]
+      ).toBeGreaterThan(secondInterceptor.response.mock.invocationCallOrder[0]);
+
+      expect(
+        secondInterceptor.response.mock.invocationCallOrder[0]
+      ).toBeGreaterThan(thirdInterceptor.response.mock.invocationCallOrder[0]);
     });
 
     it("should call interceptors as request -> requestError -> responseError -> response", async () => {

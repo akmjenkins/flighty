@@ -1,4 +1,4 @@
-import { setupAbort, teardownAbort } from "abort";
+import { setupAbort, teardownAbort } from "../src/abort";
 
 describe("abort", () => {
   describe("setupAbort", () => {

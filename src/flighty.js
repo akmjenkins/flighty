@@ -1,5 +1,4 @@
 import qs from "qs";
-import caseless from "caseless";
 import urlJoin from "url-join";
 import asyncReduce from "./async-reduce";
 import { setupAbort, teardownAbort } from "./abort";
@@ -15,38 +14,6 @@ if (typeof AbortController === "undefined") {
     "You're missing an AbortController implementation. Try npm install abortcontroller-polyfill"
   );
 }
-
-export const parse = async res => {
-  try {
-    return await res.json();
-  } catch (e) {}
-
-  try {
-    return await res.text();
-  } catch (e) {}
-
-  return null;
-};
-
-// useful interceptors that you may want to use
-export const responseInterceptor = {
-  response: async res => {
-    const flighty = await parse;
-    return {
-      ...res,
-      flighty
-    };
-  }
-};
-
-export const errorIfNotOKInterceptor = {
-  response: res => {
-    if (!res.ok) {
-      throw res;
-    }
-    return res;
-  }
-};
 
 const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE"];
 
@@ -69,7 +36,6 @@ const doFetch = (method, context, path, options) => {
     return value ? { [key]: value, ...carry } : carry;
   }, {});
 
-  const c = caseless(opts.headers); // in order to support Android POST requests
   if (!opts.body && method === "POST") {
     opts.body = "";
   }
@@ -220,6 +186,10 @@ export default class Flighty {
   }
 
   registerInterceptor(interceptor) {
+    if (!interceptor) {
+      throw new Error("cannot register a null interceptor");
+    }
+
     this.interceptors.add(interceptor);
     return () => this.interceptors.delete(interceptor);
   }

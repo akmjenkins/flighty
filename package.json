@@ -15,7 +15,6 @@
   "author": "Adam Jenkins",
   "license": "ISC",
   "dependencies": {
-    "caseless": "^0.12.0",
     "qs": "^6.6.0",
     "url-join": "^4.0.0"
   },
