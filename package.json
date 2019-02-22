@@ -12,8 +12,15 @@
   "keywords": [
     "fetch"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akmjenkins/flighty.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/akmjenkins/flighty/issues"
+  },
   "author": "Adam Jenkins",
-  "license": "ISC",
   "dependencies": {
     "qs": "^6.6.0",
     "url-join": "^4.0.0"

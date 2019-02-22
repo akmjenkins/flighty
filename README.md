@@ -1,8 +1,15 @@
 # Flighty ✈️
 
-[![codecov](https://codecov.io/gh/akmjenkins/flighty/branch/master/graph/badge.svg)](https://codecov.io/gh/akmjenkins/flighty) [![Build Status](https://travis-ci.org/akmjenkins/flighty.svg?branch=master)](https://travis-ci.org/akmjenkins/flighty)
+[![NPM Version](https://img.shields.io/npm/v/flighty.svg?branch=master)](https://www.npmjs.com/package/flighty)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![dependencies Status](https://david-dm.org/lquixada/cross-fetch/status.svg)](https://david-dm.org/lquixada/cross-fetch)
+[![codecov](https://codecov.io/gh/akmjenkins/flighty/branch/master/graph/badge.svg)](https://codecov.io/gh/akmjenkins/flighty)
+[![Build Status](https://travis-ci.org/akmjenkins/flighty.svg?branch=master)](https://travis-ci.org/akmjenkins/flighty)
 
 Simple (and tiny) fetch wrapper with nifty features such as intercepts, easy aborts, and retries, for everywhere.
+
+## Early days!
+It's still early days, I'm trying to nail down the API (specifically of the flighty object). If anybody has any ideas for improvement, or bug fixes, please [submit a PR!](https://github.com/akmjenkins/flighty/pulls)
 
 ## Motivation
 
@@ -10,9 +17,9 @@ Various fetch-wrapping libraries have some of these features, but few (if any) h
 
 Also, with the majority of environments nowadays supporting fetch, including a full fetch implementation (via cross-fetch) in the build is largely unnecessary. Plus, it allows us to keep this thing tiny.
 
-Flighty weighs a hefty 5.8kb minified and gzipped (14.7kb without the gzip) with included dependencies [qs](https://www.npmjs.com/package/qs) and [url-join](https://www.npmjs.com/package/url-join) (doesn't include fetch!)
+Flighty weighs a hefty **<5kb** minified and gzipped with included dependencies [qs](https://www.npmjs.com/package/qs) and [url-join](https://www.npmjs.com/package/url-join) (doesn't include fetch!)
 
-If you want to polyfill fetch it'll cost you bigly - a total of 8.3kb (minified and gzipped) - 22.9kb without the gzip!.
+Even adding the fetch browser polyfill (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!), only adds 2kb to the bundle size minified and gzipped.
 
 ## Use it in unit testing
 

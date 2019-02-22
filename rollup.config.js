@@ -17,7 +17,7 @@ export default [
       sourcemap: true
     },
     external: [],
-    plugins: [babel(), resolve(), commonjs(), minify(), builtins()]
+    plugins: [babel(), resolve(), commonjs(), minify({comments:false}), builtins()]
   },
   // Minified with dependencies AND fetch - suitable for browser environments where fetch is unknown
   {
@@ -30,7 +30,7 @@ export default [
       sourcemap: true
     },
     external: [],
-    plugins: [babel(), resolve(), commonjs(), builtins(), minify()]
+    plugins: [babel(), resolve(), commonjs(), builtins(), minify({comments:false})]
   },
   // Without dependencies - suitable for all ES5 environments
   {
