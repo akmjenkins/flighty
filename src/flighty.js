@@ -72,15 +72,18 @@ const call = async (
   const originalExtra = { ...extra };
   const originalPath = path;
 
+  const returnedFromInterceptors = [];
   const interceptors = Array.from(context.interceptors);
   const req = asyncReduce(
     interceptors,
-    Promise.resolve([path, options]),
+    Promise.resolve([path, options, {...extra}, retryCount]),
     "request",
     "requestError",
     // don't let interceptors modify the extra or retryCount data
     args => {
-      return args.slice(0, 2).concat([{ ...extra }, retryCount]);
+      const [path,options] = args.slice(0, 2);
+      returnedFromInterceptors.push([path,{...options}]);
+      return [path,options].concat([{ ...extra }, retryCount]);
     }
   );
 
@@ -89,8 +92,8 @@ const call = async (
     (async () => {
       // stuff from the interceptors
       const [path, options] = await req;
+      returnedFromInterceptors.push([path,{...options}]);
       const res = await doFetch(method, context, path, { ...options, signal });
-
       res.flighty = {
         method,
         retryCount,
@@ -100,12 +103,8 @@ const call = async (
           options: originalOptions,
           extra: originalExtra
         },
-        // the values that were returned from an interceptor - useful for debugging!
-        intercepted: {
-          path,
-          options: { ...options },
-          extra: { ...extra }
-        },
+        // the values that were returned from each request interceptor - useful for debugging!
+        intercepted:returnedFromInterceptors,
         // retry method
         retry: async () => {
           retryCount++;

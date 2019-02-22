@@ -1,9 +1,7 @@
 export default function async(arr, start, thenMethod, catchMethod, afterEach) {
   return arr.reduce((last, next) => {
-    if (afterEach) {
-      last = last.then(afterEach).catch(({ ...args }) => {
-        throw afterEach(args);
-      });
+    if(last !== start && afterEach) {
+      last = last.then(afterEach)
     }
 
     if (next[thenMethod]) {

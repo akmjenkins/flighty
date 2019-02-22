@@ -9,11 +9,8 @@ var urlJoin = _interopDefault(require('url-join'));
 
 function async(arr, start, thenMethod, catchMethod, afterEach) {
   return arr.reduce((last, next) => {
-    if (afterEach) {
-      last = last.then(afterEach).catch(({ ...args
-      }) => {
-        throw afterEach(args);
-      });
+    if (last !== start && afterEach) {
+      last = last.then(afterEach);
     }
 
     if (next[thenMethod]) {
@@ -138,15 +135,22 @@ const call = async (method, context, {
   const originalExtra = { ...extra
   };
   const originalPath = path;
+  const returnedFromInterceptors = [];
   const interceptors = Array.from(context.interceptors);
-  const req = async(interceptors, Promise.resolve([path, options]), "request", "requestError", // don't let interceptors modify the extra or retryCount data
+  const req = async(interceptors, Promise.resolve([path, options, { ...extra
+  }, retryCount]), "request", "requestError", // don't let interceptors modify the extra or retryCount data
   args => {
-    return args.slice(0, 2).concat([{ ...extra
+    const [path, options] = args.slice(0, 2);
+    returnedFromInterceptors.push([path, { ...options
+    }]);
+    return [path, options].concat([{ ...extra
     }, retryCount]);
   });
   const res = async(interceptors.reverse(), (async () => {
     // stuff from the interceptors
     const [path, options] = await req;
+    returnedFromInterceptors.push([path, { ...options
+    }]);
     const res = await doFetch(method, context, path, { ...options,
       signal
     });
@@ -159,14 +163,8 @@ const call = async (method, context, {
         options: originalOptions,
         extra: originalExtra
       },
-      // the values that were returned from an interceptor - useful for debugging!
-      intercepted: {
-        path,
-        options: { ...options
-        },
-        extra: { ...extra
-        }
-      },
+      // the values that were returned from each request interceptor - useful for debugging!
+      intercepted: returnedFromInterceptors,
       // retry method
       retry: async () => {
         retryCount++;

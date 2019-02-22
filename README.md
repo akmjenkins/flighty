@@ -35,7 +35,7 @@ This works because Flighty returns the standard [Response](https://developer.moz
 
 ```js
 res.flighty = {
-  method, // the method you called with
+  method, // the method you called flighty with - e.g. get, post, put
   retryCount, // the number of times this request has been retried
   json, // what you'd normally get from await res.json()
   text, // what you'd normally get from await res.text()
@@ -45,12 +45,13 @@ res.flighty = {
     options,
     extra
   },
-  // the values that were returned from an interceptor - useful for debugging!
-  intercepted: {
-    path,
-    options,
-    extra
-  },
+  // the values that were returned from request interceptors - useful for debugging!
+  intercepted: [
+    [
+      path,
+      options
+    ]
+  ],
   // retry method - calls the same request you made the first time again - hello JWT 401s
   retry: async ()
 }

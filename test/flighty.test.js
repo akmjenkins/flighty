@@ -53,11 +53,12 @@ describe("Flighty", () => {
       extra: myExtra,
       path
     });
-    expect(res.flighty.intercepted).toEqual({
-      options: myOptions,
-      extra: myExtra,
-      path
-    });
+    expect(res.flighty.intercepted).toEqual([
+      [
+        path,
+        myOptions
+      ]
+    ]);
 
     fetch.mockResponseOnce(JSON.stringify(result));
     await expect(res.flighty.retry()).resolves.toBeTruthy();
@@ -367,7 +368,6 @@ describe("Flighty", () => {
       jest.spyOn(firstInterceptor, "request");
       jest.spyOn(secondInterceptor, "request");
       const res = await api.get(path, options, extra);
-
       expect(firstInterceptor.request).toHaveBeenCalledWith(
         path,
         options,
@@ -399,7 +399,59 @@ describe("Flighty", () => {
       );
     });
 
-    test("should correctly set intercepted data on flighty object", async () => {});
+    test("should correctly set intercepted data on flighty object", async () => {
+      const path = "/";
+      const options = { opt1: "option" };
+      const extra = { extra: "stuff" };
+
+      const firstModifiedPath = "/modifiedOne";
+      const firstModifiedOptions = { opt1: "modified" };
+      const immutableFirstModifiedOptions = {...firstModifiedOptions};
+      const firstInterceptor = {
+        request: (path, options, extra, retryCount) => {
+          return [
+            firstModifiedPath,
+            firstModifiedOptions
+          ];
+        }
+      };
+
+      const secondModifiedPath = "/modifiedTwo";
+      const secondModifiedOptions = { opt1: "modifiedTwo" };
+      const secondInterceptor = {
+        request: (path,options) => {
+          // options are treated as immutable too
+          options.modified = true;
+          return [
+            secondModifiedPath,
+            options
+          ]
+        }
+      };
+
+      const thirdInterceptor = {
+        request: (path,options) => {
+          return null;
+        }
+      }
+
+      const fourthInterceptor = {
+        requestError: err => {
+          return [firstModifiedPath,secondModifiedOptions]
+        }
+      }
+
+      api.interceptor.register(firstInterceptor);
+      api.interceptor.register(secondInterceptor);
+      api.interceptor.register(thirdInterceptor);
+      api.interceptor.register(fourthInterceptor);
+      const res = await api.get(path, options, extra);
+      expect(res.flighty.intercepted).toEqual([
+        [firstModifiedPath,immutableFirstModifiedOptions],
+        [secondModifiedPath,{modified:true,...firstModifiedOptions}],
+        [firstModifiedPath,secondModifiedOptions]
+      ])
+    });
 
     test("should not call fetch if an error is thrown in the requestInterceptor", async () => {
       const error = "some specific error";
