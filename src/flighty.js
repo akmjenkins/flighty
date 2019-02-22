@@ -15,7 +15,7 @@ if (typeof AbortController === "undefined") {
   );
 }
 
-const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE", "PATCH"];
+const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DEL", "PATCH"];
 
 const doFetch = (method, context, path, options) => {
   // keep abortToken out of the fetch params
@@ -23,7 +23,7 @@ const doFetch = (method, context, path, options) => {
 
   const opts = {
     ...rest,
-    method,
+    method: method === 'del' ? "DELETE" : method.toUpperCase(),
     headers: {
       ...(context.headers || {}),
       ...options.headers

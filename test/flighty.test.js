@@ -16,7 +16,7 @@ describe("Flighty", () => {
     expect(Flighty).toBeTruthy();
   });
 
-  ["get", "post", "head", "put", "options", "delete","patch"].forEach(method => {
+  ["get", "post", "head", "put", "options", "del","patch"].forEach(method => {
     test("should handle " + method, async () => {
       const path = "/somepath";
       const result = { test: "done" };
