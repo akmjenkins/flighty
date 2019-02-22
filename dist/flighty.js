@@ -7,24 +7,6 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var qs = _interopDefault(require('qs'));
 var urlJoin = _interopDefault(require('url-join'));
 
-function async(arr, start, thenMethod, catchMethod, afterEach) {
-  return arr.reduce((last, next) => {
-    if (last !== start && afterEach) {
-      last = last.then(afterEach);
-    }
-
-    if (next[thenMethod]) {
-      last = last.then(args => next[thenMethod](...[].concat(args)));
-    }
-
-    if (next[catchMethod]) {
-      last = last.catch(next[catchMethod]);
-    }
-
-    return last;
-  }, start);
-}
-
 const teardownAbort = (token, map) => {
   if (!token) {
     return;
@@ -83,12 +65,7 @@ if (typeof AbortController === "undefined") {
 const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DEL", "PATCH"];
 
 const doFetch = (method, context, path, options) => {
-  // keep abortToken out of the fetch params
-  const {
-    abortToken,
-    ...rest
-  } = options;
-  const opts = { ...rest,
+  const opts = { ...options,
     method: method === 'del' ? "DELETE" : method.toUpperCase(),
     headers: { ...(context.headers || {}),
       ...options.headers
@@ -122,79 +99,93 @@ const doFetch = (method, context, path, options) => {
   return fetch(fullUri, opts);
 };
 
-const call = async (method, context, {
+const call = (method, context, {
   path,
   options
 }, extra, retryCount = 0) => {
-  // don't let the interceptors modify the abort signal - it's the one
-  // attached to flighty's abortController so if they do, it will break our
-  // "abortAll" method
-  const signal = setupAbort(options, context.abortController, context.abortTokenMap);
-  const originalOptions = { ...options
-  };
-  const originalExtra = { ...extra
-  };
-  const originalPath = path;
-  const returnedFromInterceptors = [];
-  const interceptors = Array.from(context.interceptors);
-  const req = async(interceptors, Promise.resolve([path, options, { ...extra
-  }, retryCount]), "request", "requestError", // don't let interceptors modify the extra or retryCount data
-  args => {
-    const [path, options] = args.slice(0, 2);
-    returnedFromInterceptors.push([path, { ...options
-    }]);
-    return [path, options].concat([{ ...extra
-    }, retryCount]);
-  });
-  const res = async(interceptors.reverse(), (async () => {
-    // stuff from the interceptors
-    const [path, options] = await req;
-    returnedFromInterceptors.push([path, { ...options
-    }]);
-    const res = await doFetch(method, context, path, { ...options,
-      signal
-    });
-    res.flighty = {
-      method,
-      retryCount,
-      // the values flighty was called with
-      call: {
-        path: originalPath,
-        options: originalOptions,
-        extra: originalExtra
+  // strip out interceptor-immutable or non-fetch options
+  const {
+    abortToken,
+    signal,
+    ...fetchOptions
+  } = options;
+  const flightyAbortSignal = setupAbort({
+    abortToken,
+    signal
+  }, context.abortController, context.abortTokenMap); // flighty object
+
+  const flighty = {
+    method,
+    retryCount,
+    // the values flighty was called with
+    call: {
+      path: path,
+      options: { ...options
       },
-      // the values that were returned from each request interceptor - useful for debugging!
-      intercepted: returnedFromInterceptors,
-      // retry method
-      retry: async () => {
-        retryCount++;
-        return await call(method, context, {
-          path: originalPath,
-          options: originalOptions
-        }, originalExtra, retryCount);
+      extra: { ...extra
       }
-    }; // add in the json and text responses to extra to make life easier
-    // for people - they can still await them if they want
+    },
+    // retry method
+    retry: () => {
+      retryCount++;
+      return call(method, context, {
+        path: path,
+        options: { ...options
+        }
+      }, { ...extra
+      }, retryCount);
+    }
+  };
+  const interceptors = Array.from(context.interceptors);
+  const req = interceptors.reduce((last, next) => {
+    // add in extra and retryCount to each interceptor
+    last = last.then(args => args.slice(0, 2).concat([{ ...extra
+    }, retryCount]));
 
-    if (res) {
-      try {
-        res.flighty.json = await res.clone().json();
-      } catch (e) {}
-
-      try {
-        res.flighty.text = await res.clone().text();
-      } catch (e) {}
+    if (next.request) {
+      last = last.then(args => next.request(...args));
     }
 
+    if (next.requestError) {
+      last = last.catch(next.requestError);
+    }
+
+    return last;
+  }, Promise.resolve([path, fetchOptions]));
+  const res = interceptors.reverse().reduce((last, next) => {
+    if (next.response) {
+      last = last.then(next.response);
+    }
+
+    if (next.responseError) {
+      last = last.catch(next.responseError);
+    }
+
+    return last;
+  }, (async () => {
+    // stuff from the interceptors
+    const [path, options] = await req;
+    const res = await doFetch(method, context, path, { ...options,
+      signal: flightyAbortSignal
+    });
+    res.flighty = flighty;
+    let json, text;
+
+    try {
+      json = await res.clone().json();
+    } catch (e) {}
+
+    try {
+      text = await res.clone().text();
+    } catch (e) {}
+
+    res.flighty = { ...flighty,
+      json,
+      text
+    };
     return res;
-  })(), "response", "responseError");
-
-  try {
-    await res;
-  } catch (e) {}
-
-  teardownAbort(options.abortToken, context.abortTokenMap);
-  return res;
+  })());
+  return res.finally(() => teardownAbort(abortToken, context.abortTokenMap));
 };
 
 class Flighty {
