@@ -17,9 +17,9 @@ Various fetch-wrapping libraries have some of these features, but few (if any) h
 
 Also, with the majority of environments nowadays supporting fetch, including a full fetch implementation (via cross-fetch) in the build is largely unnecessary. Plus, it allows us to keep this thing tiny.
 
-Flighty weighs a hefty **<5kb** minified and gzipped with included dependencies [qs](https://www.npmjs.com/package/qs) and [url-join](https://www.npmjs.com/package/url-join) (doesn't include fetch!)
+Flighty weighs a less than **<5kb** minified and gzipped with included dependencies [qs](https://www.npmjs.com/package/qs) and [url-join](https://www.npmjs.com/package/url-join) (doesn't include fetch!)
 
-Even adding the fetch browser polyfill (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!), only adds 2kb to the bundle size minified and gzipped.
+Even adding the fetch browser polyfill (and [promise-polyfill](https://github.com/taylorhakes/promise-polyfill)) (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!), only adds ~4kb to the bundle size minified and gzipped.
 
 ## Use it in unit testing
 
