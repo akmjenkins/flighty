@@ -80,7 +80,7 @@ if (typeof AbortController === "undefined") {
   throw new Error("You're missing an AbortController implementation. Try npm install abortcontroller-polyfill");
 }
 
-const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE", "PATCH"];
+const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DEL", "PATCH"];
 
 const doFetch = (method, context, path, options) => {
   // keep abortToken out of the fetch params
@@ -89,7 +89,7 @@ const doFetch = (method, context, path, options) => {
     ...rest
   } = options;
   const opts = { ...rest,
-    method,
+    method: method === 'del' ? "DELETE" : method.toUpperCase(),
     headers: { ...(context.headers || {}),
       ...options.headers
     }

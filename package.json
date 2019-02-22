@@ -1,7 +1,7 @@
 {
   "name": "flighty",
-  "version": "0.4.0",
-  "description": "Inspired by Frisbee, Bring your own fetch/polyfill. Aborts, retries, intercepts all in less than 6kb",
+  "version": "0.4.1",
+  "description": "Inspired by Frisbee, Bring your own fetch/polyfill. Aborts, retries, intercepts all in less than 5kb",
   "main": "dist/flighty.js",
   "module": "src/flighty.js",
   "scripts": {
@@ -25,12 +25,18 @@
     "qs": "^6.6.0",
     "url-join": "^4.0.0"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn build && yarn test && git add dist"
+    }
+  },
   "devDependencies": {
     "@babel/core": "^7.3.3",
     "@babel/preset-env": "^7.3.1",
     "babel-jest": "^24.1.0",
     "codecov": "^3.2.0",
     "cross-fetch": "^3.0.1",
+    "husky": "^1.3.1",
     "jest": "^24.1.0",
     "jest-fetch-mock": "^2.1.1",
     "rollup": "^1.2.1",
