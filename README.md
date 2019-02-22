@@ -255,7 +255,7 @@ api.registerInterceptor({
 
 // Now all my responses throw if I get a non-2xx response
 try {
-  const res = api.get('/');
+  const res = await api.get('/');
 } catch(e) {
   // response returned non-2xx
 }
@@ -287,7 +287,7 @@ const interceptor = {
     if (res.status === 401 && path !== REFRESH_TOKEN_PATH && res.flighty.retryCount === 0) {
       try {
         await requestToRefreshYourToken();
-        return await response.flighty.retry()
+        return response.flighty.retry()
       } catch(e) {
         // log the user out
       }
