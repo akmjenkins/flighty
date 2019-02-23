@@ -52,13 +52,6 @@ res.flighty = {
     options,
     extra
   },
-  // the values that were returned from request interceptors - useful for debugging!
-  intercepted: [
-    [
-      path,
-      options
-    ]
-  ],
   // retry method - calls the same request you made the first time again - hello JWT 401s
   retry: async ()
 }
