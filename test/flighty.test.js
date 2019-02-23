@@ -16,7 +16,7 @@ describe("Flighty", () => {
     expect(Flighty).toBeTruthy();
   });
 
-  ["get", "post", "head", "put", "options", "del","patch"].forEach(method => {
+  ["get", "post", "head", "put", "options", "del", "patch"].forEach(method => {
     test("should handle " + method, async () => {
       const path = "/somepath";
       const result = { test: "done" };
@@ -178,6 +178,17 @@ describe("Flighty", () => {
     api.jwt();
     const res = await api.get("/");
     expect(fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  describe("fetch retry", () => {
+    /*
+      it should throw if retry parameters are invalid
+
+      failed network
+          it should obey the timeout
+          it should obey the aborted signal
+
+    */
   });
 
   describe("abort", () => {

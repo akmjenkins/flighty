@@ -13,13 +13,24 @@ It's still early days, I'm trying to nail down the API (specifically of the flig
 
 ## Motivation
 
-Various fetch-wrapping libraries have some of these features, but few (if any) have them all.
+Various fetch-wrapping libraries have some of these features, but few (if any) have them all - retries, easy aborts, and interceptors.
 
-Also, with the majority of environments nowadays supporting fetch, including a full fetch implementation (via cross-fetch) in the build is largely unnecessary. Plus, it allows us to keep this thing tiny.
+More importantly, almost all fetch wrapping libraries I've investigated include their polyfills right in their package. Why require a no-opt-out polyfill if you're not 100% sure the user (i.e. you, the developer) is going to use it?
 
-Flighty weighs a less than **<5kb** minified and gzipped with included dependencies [qs](https://www.npmjs.com/package/qs) and [url-join](https://www.npmjs.com/package/url-join) (doesn't include fetch!)
+So, Flighty is BYOF if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
 
-Even adding the fetch browser polyfill (and [promise-polyfill](https://github.com/taylorhakes/promise-polyfill)) (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!), only adds ~4kb to the bundle size minified and gzipped.
+```js
+
+// without polyfill
+import Flighty from "flighty";
+
+// with polyfill
+import Flighty from "flighty/fetch";
+```
+
+**Note:** The polyfill (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!) also includes a ridiculously small [promise-polyfill](https://github.com/taylorhakes/promise-polyfill) (because you'll probably want that, too, but if you don't, well, it's less than 1kb minified and gzipped, so don't sweat it).
+
+If you're using Flighty as a standalone library in the browser, you can relax, it weighs less than **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch-polyfill.
 
 ## Use it in unit testing
 
@@ -114,7 +125,6 @@ Like signals, a single abortToken can cancel multiple requests!
 
 ```
 
-
 ### Interceptors
 
 Drop in replacement for anybody using Frisbee interceptors or [fetch-intercept](https://www.npmjs.com/package/fetch-intercept), but with a couple of extra things:
@@ -170,6 +180,24 @@ I've found retries (combined with response interceptors) to be invaluable when w
   }
 ```
 
+After spending some time digging through the popular [fetch-retry](https://www.npmjs.com/package/fetch-retry) I realized it was missing two big things
+
+1) Ignore retrying if the request was aborted and
+2) That an asynchronous operation in addition to just a plain timeout would be invaluable.
+
+Investigating other NPM retries results in too many dependencies for such a tiny library, so Flighty has it's own tiny asyncRetry package that has a special wrapper for fetch. It's API is identical to fetch-retry with:
+
+* `retries` - the maximum number of retries to perform on a fetch (default 0)
+
+* `retryDelay` - a timeout in between retries (default 1000)
+
+* `retryOn` - an array of HTTP status codes that you want to retry (default you only retry if there was a network error)
+
+* `retryFn` - this added feature is key - an function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself recipe to refresh JWTs
+
+We could've used other popular NPM retry packages but Flighty wants to the added cost of weight (did we mention Flighty's asyncRetry is tiny?) and managing dependencies (and dependencies' dependencies...)
+
+
 ## API
 
 * `Flighty` - accepts an `options` object, with the following accepted options:
@@ -194,7 +222,7 @@ Upon being invoked, `Flighty` has the following methods
 
     * `path` **required** - the path for the HTTP request (e.g. `/v1/login`, will be prefixed with the value of `baseURI` if set)
 
-    * `options` _optional_ - everything you'd pass into fetch's [init](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) plus an optional `abortToken`
+    * `options` _optional_ - everything you'd pass into fetch's [init](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) plus an optional `abortToken` and the retry parameters: `retries`,`retryFn`,`retryDelay`,`retryFn`
 
     * `extra` _optional_ object - sometimes you have some meta data about a request that you may want interceptors or other various listeners to know about. Whatever you pass in here will come out the other end attached the to `res.flighty.call` object and will also be passed along to all interceptors along the way
 
@@ -261,7 +289,7 @@ try {
 }
 ```
 
-### JWT Recipe with Retries and Interceptors
+### JWT Recipe with retry() and Interceptors
 
 ```js
 const api = new Flighty();
@@ -296,5 +324,34 @@ const interceptor = {
     return res;
   }
 }
+
+```
+
+### Another JWT Recipe with fetch-retry and Interceptors
+```js
+const api = new Flighty();
+
+// same request interceptor as before
+const interceptor = {
+  request:(path,options) {
+    api.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
+    return [path,options]
+  }
+}
+
+const authenticatedApiRequest = (path,options,extra) => {
+  return api(
+    path,
+    {
+      ...options,
+      // retry the request 1 time
+      retries:1,
+      // if a 401 or network error is received
+      retryOn:[401],
+      // and request a new token in between
+      retryFn:() => api.get(REFRESH_TOKEN_ENDPOINT)
+    }
+    extra)
+};
 
 ```

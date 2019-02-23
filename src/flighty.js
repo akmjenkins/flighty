@@ -1,6 +1,7 @@
 import qs from "qs";
 import urlJoin from "url-join";
 import { setupAbort, teardownAbort } from "./abort";
+import { fetchRetry } from "./retry";
 
 if (typeof fetch === "undefined") {
   throw new Error(
@@ -60,6 +61,10 @@ const call = (
 
   // strip out interceptor-immutable or non-fetch options
   const {
+    retries = 0,
+    retryDelay = 1000,
+    retryOn = [],
+    retryFn,
     abortToken,
     signal,
     ...fetchOptions
@@ -112,7 +117,18 @@ const call = (
   },(async () => {
     // stuff from the interceptors
     const [path, options] = await req;
-    const res = await doFetch(method, context, path, {...options,signal:flightyAbortSignal});
+    const { count, res } = await fetchRetry(
+      () => doFetch(method,context,path,{...options,signal:flightyAbortSignal}),
+      {
+        retries,
+        retryDelay,
+        retryOn,
+        retryFn,
+        signal:flightyAbortSignal
+      }
+    )
+
+    retryCount += count;
     res.flighty = flighty;
 
     let json,text;
