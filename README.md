@@ -13,13 +13,23 @@ It's still early days, I'm trying to nail down the API (specifically of the flig
 
 ## Motivation
 
-Various fetch-wrapping libraries have some of these features, but few (if any) have them all.
+Various fetch-wrapping libraries have some of these features, but few (if any) have them all - retries, easy aborts, and interceptors.
 
-Also, with the majority of environments nowadays supporting fetch, including a full fetch implementation (via cross-fetch) in the build is largely unnecessary. Plus, it allows us to keep this thing tiny.
+More importantly, almost all fetch wrapping libraries I've investigated include their polyfills right in their package. Why require a no-opt-out polyfill if you're not 100% sure the user (i.e. you, the developer) is going to use it?
 
-Flighty weighs a less than **<5kb** minified and gzipped with included dependencies [qs](https://www.npmjs.com/package/qs) and [url-join](https://www.npmjs.com/package/url-join) (doesn't include fetch!)
+So, Flighty is BYOF if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
 
-Even adding the fetch browser polyfill (and [promise-polyfill](https://github.com/taylorhakes/promise-polyfill)) (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!), only adds ~4kb to the bundle size minified and gzipped.
+```js
+// without polyfill
+import Flighty from "flighty";
+
+// with polyfill
+import Flighty from "flighty/fetch";
+```
+
+**Note:** The polyfill (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!) also includes a ridiculously small [promise-polyfill](https://github.com/taylorhakes/promise-polyfill) (because you'll probably want that, too, but if you don't, well, it's less than 1kb minified and gzipped, so don't sweat it).
+
+If you're using Flighty as a standalone library in the browser, you can relax, it weighs less than **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch-polyfill.
 
 ## Use it in unit testing
 
