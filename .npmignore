@@ -1,0 +1,9 @@
+test
+coverage
+babel.config.js
+.gitignore
+.npmignore
+.travis.yml
+jest.config.js
+rollup.config.js
+setupJest.js

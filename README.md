@@ -8,14 +8,11 @@
 
 Simple (and tiny) fetch wrapper with nifty features such as intercepts, easy aborts, and retries, for everywhere.
 
-## Early days!
-It's still early days, I'm trying to nail down the API (specifically of the flighty object). If anybody has any ideas for improvement, or bug fixes, please [submit a PR!](https://github.com/akmjenkins/flighty/pulls)
-
 ## Motivation
 
 Various fetch-wrapping libraries have some of these features, but few (if any) have them all - retries, easy aborts, and interceptors.
 
-More importantly, almost all fetch wrapping libraries I've investigated include their polyfills right in their package. Why require a no-opt-out polyfill if you're not 100% sure the user (i.e. you, the developer) is going to use it?
+More importantly, almost all fetch wrapping libraries I've investigated include their polyfills right in their main packages. Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch).
 
 So, Flighty is BYOF if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
 
@@ -27,9 +24,7 @@ import Flighty from "flighty";
 import Flighty from "flighty/fetch";
 ```
 
-**Note:** The polyfill (thanks [cross-fetch](https://www.npmjs.com/package/cross-fetch)!) also includes a ridiculously small [promise-polyfill](https://github.com/taylorhakes/promise-polyfill) (because you'll probably want that, too, but if you don't, well, it's less than 1kb minified and gzipped, so don't sweat it).
-
-If you're using Flighty as a standalone library in the browser, you can relax, it weighs less than **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch-polyfill.
+If you're using Flighty as a standalone library in the browser, you can relax, it weighs less than **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch (and abortcontroller and promise) polyfill.
 
 ## Use it in unit testing
 
