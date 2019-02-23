@@ -4,10 +4,11 @@
   "description": "Inspired by Frisbee, Bring your own fetch/polyfill. Aborts, retries, intercepts all in less than 5kb",
   "main": "dist/flighty.js",
   "module": "src/flighty.js",
+  "browser": "dist/flighty.browser.js",
   "scripts": {
     "test": "jest",
     "test:coverage": "npm run test && codecov",
-    "build": "rollup -c"
+    "build": "rimraf dist && rollup -c"
   },
   "keywords": [
     "fetch"
@@ -26,14 +27,16 @@
     "url-join": "^4.0.0"
   },
   "devDependencies": {
+    "cross-fetch": "^3.0.1",
+    "promise-polyfill": "^8.1.0",
+    "abortcontroller-polyfill": "^1.2.5",
     "@babel/core": "^7.3.3",
     "@babel/preset-env": "^7.3.1",
     "babel-jest": "^24.1.0",
     "codecov": "^3.2.0",
-    "cross-fetch": "^3.0.1",
     "jest": "^24.1.0",
     "jest-fetch-mock": "^2.1.1",
-    "promise-polyfill": "^8.1.0",
+    "rimraf": "^2.6.3",
     "rollup": "^1.2.1",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-babel-minify": "^7.0.0",
