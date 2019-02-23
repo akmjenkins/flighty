@@ -32,6 +32,7 @@ export default [
     external: [],
     plugins: [babel(), resolve(), commonjs(), builtins(), minify({comments:false})]
   },
+
   // Without dependencies - suitable for all ES5 environments
   {
     input: "src/flighty.js",
@@ -46,5 +47,21 @@ export default [
       ...Object.keys(pkg.peerDependencies || {})
     ],
     plugins: [babel()]
-  }
+  },
+
+  // ES5 polyfilled
+  {
+    input: "src/flighty.fetch.js",
+    output: {
+      file: "fetch/index.js",
+      format: "cjs",
+      indent: false,
+      exports: "named"
+    },
+    external: [
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {})
+    ],
+    plugins: [babel(),resolve(),commonjs(), builtins()]
+  },
 ];
