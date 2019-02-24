@@ -112,7 +112,6 @@ Like signals, a single abortToken can cancel multiple requests!
 
 ```
 
-
 ### Interceptors
 
 Drop in replacement for anybody using Frisbee interceptors or [fetch-intercept](https://www.npmjs.com/package/fetch-intercept), but with a couple of extra things:
@@ -155,7 +154,7 @@ responseError: function (err) {
 ```
 ### Retries
 
-I've found retries (combined with response interceptors) to be invaluable when working with [JWTs](https://jwt.io/). Get a 401 from your API? Intercept it in the response, get a new accessToken and then retry the request.
+The Flighty object has a retry method to allow you an easy way to retry a request:
 
 ```js
   let res;
@@ -167,6 +166,32 @@ I've found retries (combined with response interceptors) to be invaluable when w
     res = res.flighty.retry();
   }
 ```
+
+After spending some time digging through the popular [fetch-retry](https://www.npmjs.com/package/fetch-retry) I realized it was missing two big things
+
+1) Ignore retrying if the request was aborted and
+2) That an asynchronous operation in addition to just a plain timeout would be invaluable.
+
+So Flighty's retry API is compatible with fetch-retry:
+
+* `retries` - the maximum number of retries to perform on a fetch (default 0)
+
+* `retryDelay` - a timeout in between retries (default 1000)
+
+* `retryOn` - an array of HTTP status codes that you want to retry (default you only retry if there was a network error)
+
+* `retryFn` - this added feature is key - a function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself a(nother) recipe to refresh JWTs (more at the end of this README):
+
+```js
+res = await api.get('/path-requiring-authentication',{
+  retries:1,
+  retryOn:[401],
+  retryFn:() => api.get('/path_to_refresh_you_token')
+})
+```
+
+We could've used other popular NPM retry packages but Flighty wants to the added cost of weight (did we mention Flighty's asyncRetry is tiny?) and managing dependencies (and dependencies' dependencies...)
+
 
 ## API
 
@@ -192,7 +217,7 @@ Upon being invoked, `Flighty` has the following methods
 
     * `path` **required** - the path for the HTTP request (e.g. `/v1/login`, will be prefixed with the value of `baseURI` if set)
 
-    * `options` _optional_ - everything you'd pass into fetch's [init](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) plus an optional `abortToken`
+    * `options` _optional_ - everything you'd pass into fetch's [init](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) plus an optional `abortToken` and the retry parameters: `retries`,`retryFn`,`retryDelay`,`retryFn`
 
     * `extra` _optional_ object - sometimes you have some meta data about a request that you may want interceptors or other various listeners to know about. Whatever you pass in here will come out the other end attached the to `res.flighty.call` object and will also be passed along to all interceptors along the way
 
@@ -259,7 +284,7 @@ try {
 }
 ```
 
-### JWT Recipe with Retries and Interceptors
+### JWT Recipe with retry() and Interceptors
 
 ```js
 const api = new Flighty();
@@ -294,5 +319,34 @@ const interceptor = {
     return res;
   }
 }
+
+```
+
+### Another JWT Recipe with fetch-retry and Interceptors
+```js
+const api = new Flighty();
+
+// same request interceptor as before
+const interceptor = {
+  request:(path,options) {
+    api.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
+    return [path,options]
+  }
+}
+
+const authenticatedApiRequest = (path,options,extra) => {
+  return api(
+    path,
+    {
+      ...options,
+      // retry the request 1 time
+      retries:1,
+      // if a 401 or network error is received
+      retryOn:[401],
+      // and request a new token in between
+      retryFn:() => api.get(REFRESH_TOKEN_ENDPOINT)
+    }
+    extra)
+};
 
 ```

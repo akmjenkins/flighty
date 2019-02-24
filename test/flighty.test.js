@@ -1,6 +1,7 @@
 import Flighty from "../src/flighty";
 import qs from "qs";
 
+
 describe("Flighty", () => {
   const headers = {
     "Content-Type": "application/json"
@@ -16,7 +17,7 @@ describe("Flighty", () => {
     expect(Flighty).toBeTruthy();
   });
 
-  ["get", "post", "head", "put", "options", "del","patch"].forEach(method => {
+  ["get", "post", "head", "put", "options", "del", "patch"].forEach(method => {
     test("should handle " + method, async () => {
       const path = "/somepath";
       const result = { test: "done" };
@@ -178,6 +179,38 @@ describe("Flighty", () => {
     api.jwt();
     const res = await api.get("/");
     expect(fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+  });
+
+  describe("fetch retry", () => {
+    // everything shouldv'e been tested
+
+    test("should increment retryCount based on return value from fetchRetry", async () => {
+      let i = 0;
+      const stop = 3;
+      const val = {};
+      const err = "bad";
+      fetch.mockImplementation(() => {
+        i++;
+        if(i < stop) {
+          throw new Error(err);
+        }
+        return val;
+      });
+
+      const res = await api.get("/",{
+        retries: 10,
+        retryDelay: 1
+      });
+      expect(res.flighty.retryCount).toBe(2);
+      expect(fetch).toHaveBeenCalledTimes(3);
+
+
+      // for good measure
+      const retryRes = await res.flighty.retry();
+      expect(retryRes.flighty.retryCount).toBe(3);
+
+    })
+
   });
 
   describe("abort", () => {

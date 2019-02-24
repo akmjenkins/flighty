@@ -56,6 +56,100 @@ const setupAbort = ({
   return abortController.signal;
 };
 
+const retryDelayFn = delay => new Promise(res => setTimeout(() => res(), delay));
+
+const checkFn = (fn, err) => {
+  if (typeof fn !== "function") {
+    throw new Error(err);
+  }
+};
+
+const asyncRetry = async (asyncFnToRetry, {
+  retries = 0,
+  retryDelay = 1000,
+  retryFn
+}) => {
+  checkFn(asyncFnToRetry, "retry function is not a function");
+
+  if (isNaN(retries) || retries < 0) {
+    throw new Error("retries must be a number greater than or equal to 0");
+  }
+
+  if (retryDelay && isNaN(retryDelay)) {
+    throw new Error("retryDelay must be a number (milliseconds)");
+  }
+
+  if (retryFn && typeof retryFn !== "function") {
+    throw new Error("retryFn must be callable");
+  }
+
+  const _retryFn = async (...args) => retryFn ? retryFn(...args) : retryDelayFn(retryDelay);
+
+  let count = -1;
+
+  const wrap = async retries => {
+    try {
+      count++;
+      return await asyncFnToRetry(count);
+    } catch (err) {
+      if (!retries) {
+        throw err;
+      }
+
+      await _retryFn(count + 1, err);
+      return wrap(--retries);
+    }
+  };
+
+  const res = await wrap(retries);
+  return {
+    count,
+    res
+  };
+};
+const fetchRetry = async (fetchToRetry, {
+  retries,
+  retryDelay,
+  retryFn,
+  retryOn = [],
+  signal
+}) => {
+  checkFn(fetchToRetry, "retry function is not a function");
+
+  if (retryOn && !Array.isArray(retryOn)) {
+    throw new Error("retryOn must be an array of response statii");
+  }
+
+  if (signal != null && typeof signal.aborted !== "boolean") {
+    throw new Error('signal must have boolean "aborted" property');
+  }
+
+  const isAborted = () => signal && signal.aborted;
+
+  const throwAborted = () => {
+    throw new Error("aborted");
+  };
+
+  return asyncRetry(async retryCount => {
+    const res = await fetchToRetry();
+
+    if (retryOn.indexOf(res.status) === -1 || retries === retryCount) {
+      return res;
+    }
+
+    throw new Error(res);
+  }, {
+    retries,
+    retryFn: async (...args) => {
+      if (isAborted()) {
+        return throwAborted();
+      }
+
+      return retryFn ? retryFn(...args) : retryDelayFn(retryDelay);
+    }
+  });
+};
+
 if (typeof fetch === "undefined" || typeof AbortController === "undefined") {
   let which;
 
@@ -111,6 +205,10 @@ const call = (method, context, {
 }, extra, retryCount = 0) => {
   // strip out interceptor-immutable or non-fetch options
   const {
+    retries = 0,
+    retryDelay = 1000,
+    retryOn = [],
+    retryFn,
     abortToken,
     signal,
     ...fetchOptions
@@ -122,7 +220,6 @@ const call = (method, context, {
 
   const flighty = {
     method,
-    retryCount,
     // the values flighty was called with
     call: {
       path: path,
@@ -171,9 +268,19 @@ const call = (method, context, {
   }, (async () => {
     // stuff from the interceptors
     const [path, options] = await req;
-    const res = await doFetch(method, context, path, { ...options,
+    const {
+      count,
+      res
+    } = await fetchRetry(() => doFetch(method, context, path, { ...options,
+      signal: flightyAbortSignal
+    }), {
+      retries,
+      retryDelay,
+      retryOn,
+      retryFn,
       signal: flightyAbortSignal
     });
+    retryCount += count;
     res.flighty = flighty;
     let json, text;
 
@@ -186,6 +293,7 @@ const call = (method, context, {
     } catch (e) {}
 
     res.flighty = { ...flighty,
+      retryCount,
       json,
       text
     };
