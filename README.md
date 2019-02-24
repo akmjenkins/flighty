@@ -6,13 +6,13 @@
 [![codecov](https://codecov.io/gh/akmjenkins/flighty/branch/master/graph/badge.svg)](https://codecov.io/gh/akmjenkins/flighty)
 [![Build Status](https://travis-ci.org/akmjenkins/flighty.svg?branch=master)](https://travis-ci.org/akmjenkins/flighty)
 
-Simple (and tiny) fetch wrapper with nifty features such as intercepts, easy aborts, and retries, for everywhere.
+Simple (and tiny) fetch wrapper with nifty features such as intercepts, ***easy*** aborts, and retries, for everywhere.
 
 ## Motivation
 
-Various fetch-wrapping libraries have some of these features, but few (if any) have them all.
+Yet another fetch wrapping library? Well, various fetch-wrapping libraries have some of the above features, but few (if any) have them all.
 
-More importantly, almost all fetch wrapping libraries investigated include their polyfills right in their main packages. Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch), so you don't have to bloat your code if you don't absolutely need to.
+More importantly, almost all fetch wrapping libraries investigated include their polyfills right in the main packages (or don't include polyfill's at all requiring you to find out what you're missing). Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch), so you don't have to bloat your code if you don't absolutely need to.
 
 So, Flighty is BYOF - bring your own fetch - if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
 
@@ -24,6 +24,8 @@ import Flighty from "flighty";
 import Flighty from "flighty/fetch";
 ```
 
+Boom, now you've got a full featured fetch-wrapping library everywhere.
+
 If you're using Flighty as a standalone library in the browser, you can relax, it weighs less than **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch (and abortcontroller and promise) polyfill.
 
 ## Use it in unit testing
@@ -32,7 +34,7 @@ Keep it short - don't mock Flighty. It'd be over-complicated and unnecessary to 
 
 ## Features
 
-**_Drop in replacement_** for fetch. This works:
+**Drop in replacement** for fetch. This works:
 
 ```js
 const res = await fetch('/somepath',{some options});
@@ -65,7 +67,7 @@ res.flighty = {
 
 ```
 
-### Easy Abort
+### Abort
 
 Flighty comes with two abort APIs. `abortAll()` which cancels all ongoing requests and cancellation via an `abortToken` (similar to [axios cancellation token](https://github.com/axios/axios#cancellation) but easier!).
 
@@ -84,6 +86,7 @@ Aborting Fetch requests comes with a hairy, verbose [AbortController](https://de
   }
 
 ```
+
 Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` to cancel the request.
 
 ```js
@@ -97,7 +100,7 @@ Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` 
   }
 ```
 
-Tokens, like AbortController signals, can be used to abort multiple requests. Let Flighty automate the creation and management of AbortController's for your requests. Just pass in a token and you're request is then easy to abort.
+Tokens, like AbortController signals, can be used to abort multiple requests. Let Flighty automate the creation and management of AbortController's for your requests. Just pass in a token and your request is then easy to abort.
 
 ```js
  const abortToken = "some token";
