@@ -6,45 +6,63 @@ import builtins from "rollup-plugin-node-builtins";
 import pkg from "./package.json";
 
 export default [
-  // Minified with dependencies - suitable for all environments with a fetch
+  // With dependencies, no polyfills
+  // Browser
   {
     input: "src/flighty.js",
     output: {
-      file: "dist/flighty.min.js",
+      file: "dist/flighty.browser.min.js",
       format: "iife",
       name: "flighty",
       globals: { flighty: "Flighty" },
       sourcemap: true
     },
     external: [],
-    plugins: [babel(), resolve(), commonjs(), minify({comments:false}), builtins()]
+    plugins: [babel(), resolve({browser:true}), commonjs(), minify({comments:false}), builtins()]
   },
-  // Minified with dependencies AND fetch - suitable for browser environments where fetch is unknown
-  {
-    input: "src/flighty.fetch.js",
-    output: {
-      file: "dist/flighty.fetch.min.js",
-      format: "iife",
-      name: "flighty",
-      globals: { flighty: "Flighty" },
-      sourcemap: true
-    },
-    external: [],
-    plugins: [babel(), resolve(), commonjs(), builtins(), minify({comments:false})]
-  },
-  // Without dependencies - suitable for all ES5 environments
+
+  // ES5
   {
     input: "src/flighty.js",
     output: {
       file: "dist/flighty.js",
       format: "cjs",
-      indent: false,
-      exports: "named"
+      indent: false
     },
     external: [
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {})
     ],
-    plugins: [babel()]
-  }
+    plugins: [babel(),commonjs()]
+  },
+
+  // Include polyfills for fetch, promise, and AbortController
+  // Browser
+  {
+    input: "src/flighty.fetch.js",
+    output: {
+      file: "dist/flighty.fetch.browser.min.js",
+      format: "iife",
+      name: "flighty",
+      globals: { flighty: "Flighty" },
+      sourcemap: true
+    },
+    external: [],
+    plugins: [babel(), resolve({browser:true}), commonjs(), builtins(), minify({comments:false})]
+  },
+
+  // Other
+  {
+    input: "src/flighty.fetch.js",
+    output: {
+      file: "dist/flighty.fetch.js",
+      format: "cjs",
+      indent: false
+    },
+    external: [
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {})
+    ],
+    plugins: [babel(),resolve({preferBuiltins:true}),commonjs()]
+  },
 ];

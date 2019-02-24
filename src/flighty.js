@@ -3,16 +3,15 @@ import urlJoin from "url-join";
 import { setupAbort, teardownAbort } from "./abort";
 import { fetchRetry } from "./retry";
 
-if (typeof fetch === "undefined") {
-  throw new Error(
-    "You need a fetch implementation. Try npm install cross-fetch"
-  );
-}
+if (typeof fetch === "undefined" || typeof AbortController === "undefined") {
+  let which;
+  if(typeof fetch === "undefined") {
+    which = "You're missing a fetch implementation.";
+  } else {
+    which = "You're missing an AbortController implementation.";
+  }
 
-if (typeof AbortController === "undefined") {
-  throw new Error(
-    "You're missing an AbortController implementation. Try npm install abortcontroller-polyfill"
-  );
+  throw new Error(`${which} Try var Flighty = require('flighty/fetch') or import Flighty from 'flighty/fetch'"`);
 }
 
 const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DEL", "PATCH"];
