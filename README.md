@@ -154,7 +154,7 @@ responseError: function (err) {
 ```
 ### Retries
 
-I've found retries (combined with response interceptors) to be invaluable when working with [JWTs](https://jwt.io/). Get a 401 from your API? Intercept it in the response, get a new accessToken and then retry the request.
+The Flighty object has a retry method to allow you an easy way to retry a request:
 
 ```js
   let res;
@@ -172,7 +172,7 @@ After spending some time digging through the popular [fetch-retry](https://www.n
 1) Ignore retrying if the request was aborted and
 2) That an asynchronous operation in addition to just a plain timeout would be invaluable.
 
-Investigating other NPM retries results in too many dependencies for such a tiny library, so Flighty has it's own tiny asyncRetry package that has a special wrapper for fetch. It's API is identical to fetch-retry with:
+So Flighty's retry API is compatible with fetch-retry:
 
 * `retries` - the maximum number of retries to perform on a fetch (default 0)
 
@@ -180,7 +180,15 @@ Investigating other NPM retries results in too many dependencies for such a tiny
 
 * `retryOn` - an array of HTTP status codes that you want to retry (default you only retry if there was a network error)
 
-* `retryFn` - this added feature is key - an function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself recipe to refresh JWTs
+* `retryFn` - this added feature is key - a function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself a(nother) recipe to refresh JWTs (more at the end of this README):
+
+```js
+res = await api.get('/path-requiring-authentication',{
+  retries:1,
+  retryOn:[401],
+  retryFn:() => api.get('/path_to_refresh_you_token')
+})
+```
 
 We could've used other popular NPM retry packages but Flighty wants to the added cost of weight (did we mention Flighty's asyncRetry is tiny?) and managing dependencies (and dependencies' dependencies...)
 
