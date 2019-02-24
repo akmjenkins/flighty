@@ -50,7 +50,6 @@ export const fetchRetry = async (
   fetchToRetry,
   { retries, retryDelay, retryFn, retryOn = [], signal }
 ) => {
-
   checkFn(fetchToRetry,"retry function is not a function")
 
   if (retryOn && !Array.isArray(retryOn)) {
@@ -62,11 +61,6 @@ export const fetchRetry = async (
   }
 
   let retryCount = 0;
-  const isAborted = () => signal && signal.aborted;
-  const throwAborted = () => {
-    throw new Error("aborted");
-  };
-
   return asyncRetry(
     async retryCount => {
       const res = await fetchToRetry();
@@ -77,11 +71,16 @@ export const fetchRetry = async (
     },
     {
       retries,
-      retryFn: async (...args) => {
-        if(isAborted()) {
-          return throwAborted();
+      retryFn: async (count,err) => {
+        if(signal && signal.aborted) {
+          throw err;
         }
-        return retryFn ? retryFn(...args) : retryDelayFn(retryDelay);
+
+        if(retryFn) {
+          return retryFn(count,err)
+        }
+
+        return retryDelayFn(retryDelay);
       }
     }
   );

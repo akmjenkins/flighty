@@ -23,11 +23,25 @@ describe("retry", () => {
     });
 
     test("should not retry if the fetch was aborted", async () => {
-      fetch.mockReject("some error");
+      fetch.mockImplementation(() => { throw new Error("aborted") })
       const signal = { aborted: true };
       await expect(fetchFn({ retries: 10, signal })).rejects.toThrow();
       expect(fetch).toHaveBeenCalledTimes(1);
     });
+
+    test("should call retryFn", async () => {
+      let i = 0;
+      const retryFn = jest.fn();
+      fetch.mockImplementation(() => {
+        i++;
+        if(i == 5) {
+          return 'done';
+        }
+        throw new Error("aborted")
+      })
+      await expect(fetchFn({retries:10,retryFn})).resolves.toBeTruthy();
+      expect(retryFn).toHaveBeenCalledTimes(4);
+    })
 
     test("should obey retryOn statii", async () => {
       fetch.mockImplementation(() => ({ status: 401 }));

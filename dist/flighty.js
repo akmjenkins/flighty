@@ -123,13 +123,6 @@ const fetchRetry = async (fetchToRetry, {
   if (signal != null && typeof signal.aborted !== "boolean") {
     throw new Error('signal must have boolean "aborted" property');
   }
-
-  const isAborted = () => signal && signal.aborted;
-
-  const throwAborted = () => {
-    throw new Error("aborted");
-  };
-
   return asyncRetry(async retryCount => {
     const res = await fetchToRetry();
 
@@ -140,12 +133,16 @@ const fetchRetry = async (fetchToRetry, {
     throw new Error(res);
   }, {
     retries,
-    retryFn: async (...args) => {
-      if (isAborted()) {
-        return throwAborted();
+    retryFn: async (count, err) => {
+      if (signal && signal.aborted) {
+        throw err;
       }
 
-      return retryFn ? retryFn(...args) : retryDelayFn(retryDelay);
+      if (retryFn) {
+        return retryFn(count, err);
+      }
+
+      return retryDelayFn(retryDelay);
     }
   });
 };
