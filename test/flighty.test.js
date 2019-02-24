@@ -1,6 +1,7 @@
 import Flighty from "../src/flighty";
 import qs from "qs";
 
+
 describe("Flighty", () => {
   const headers = {
     "Content-Type": "application/json"
@@ -181,14 +182,35 @@ describe("Flighty", () => {
   });
 
   describe("fetch retry", () => {
-    /*
-      it should throw if retry parameters are invalid
+    // everything shouldv'e been tested
 
-      failed network
-          it should obey the timeout
-          it should obey the aborted signal
+    test("should increment retryCount based on return value from fetchRetry", async () => {
+      let i = 0;
+      const stop = 3;
+      const val = {};
+      const err = "bad";
+      fetch.mockImplementation(() => {
+        i++;
+        if(i < stop) {
+          throw new Error(err);
+        }
+        return val;
+      });
 
-    */
+      const res = await api.get("/",{
+        retries: 10,
+        retryDelay: 1
+      });
+      expect(res.flighty.retryCount).toBe(2);
+      expect(fetch).toHaveBeenCalledTimes(3);
+
+
+      // for good measure
+      const retryRes = await res.flighty.retry();
+      expect(retryRes.flighty.retryCount).toBe(3);
+
+    })
+
   });
 
   describe("abort", () => {

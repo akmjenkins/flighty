@@ -78,7 +78,6 @@ const call = (
   // flighty object
   const flighty = {
     method,
-    retryCount,
     // the values flighty was called with
     call: {
       path: path,
@@ -140,6 +139,7 @@ const call = (
 
     res.flighty = {
       ...flighty,
+      retryCount,
       json,
       text
     }

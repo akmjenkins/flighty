@@ -131,27 +131,5 @@ describe("retry", () => {
       ).resolves.toEqual({ count: 5, res: val });
     });
 
-    //
-    // if (retryDelay && isNaN(retryDelay)) {
-    //   throw new Error("retryDelay must be a number (milliseconds)");
-    // }
-    //
-    //
-    // test("should reject if retries is not a number or negative",() => {
-    //   expect(fetch)
-    // })
-    /*
-      should throw if retries is not a number or less than 1
-      should throw if retry delay is defined and not a number
-      should throw if retryFn is defined and not a function
-
-
-      should obey the number of retries
-
-      should return the count and result
-
-      should obey the delay
-
-    */
   });
 });

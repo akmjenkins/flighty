@@ -214,7 +214,6 @@ const call = (method, context, {
 
   const flighty = {
     method,
-    retryCount,
     // the values flighty was called with
     call: {
       path: path,
@@ -288,6 +287,7 @@ const call = (method, context, {
     } catch (e) {}
 
     res.flighty = { ...flighty,
+      retryCount,
       json,
       text
     };
