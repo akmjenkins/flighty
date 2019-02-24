@@ -2185,7 +2185,7 @@ const asyncRetry = async (asyncFnToRetry, {
     throw new Error("retryFn must be callable");
   }
 
-  const _retryFn = async err => retryFn ? retryFn(err) : retryDelayFn(retryDelay);
+  const _retryFn = async (...args) => retryFn ? retryFn(...args) : retryDelayFn(retryDelay);
 
   let count = -1;
 
@@ -2198,7 +2198,7 @@ const asyncRetry = async (asyncFnToRetry, {
         throw err;
       }
 
-      await _retryFn(err);
+      await _retryFn(count + 1, err);
       return wrap(--retries);
     }
   };
@@ -2242,7 +2242,13 @@ const fetchRetry = async (fetchToRetry, {
     throw new Error(res);
   }, {
     retries,
-    retryFn: async () => isAborted() ? throwAborted() : retryFn ? retryFn() : retryDelayFn(retryDelay)
+    retryFn: async (...args) => {
+      if (isAborted()) {
+        return throwAborted();
+      }
+
+      return retryFn ? retryFn(...args) : retryDelayFn(retryDelay);
+    }
   });
 };
 

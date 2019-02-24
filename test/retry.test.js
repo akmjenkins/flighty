@@ -46,7 +46,7 @@ describe("retry", () => {
 
   describe("asyncRetry", () => {
     const stopAfter = (n, val, err) =>
-      jest.fn(i => {
+      jest.fn((i,nextErr) => {
         if (i === n - 1) return val;
         throw new Error(err);
       });
@@ -93,6 +93,23 @@ describe("retry", () => {
 
       expect(retryFn).toHaveBeenCalledTimes(10);
     });
+
+    test("retryFn should be called with the retryCount and the error that was thrown", async () => {
+      const retryFn = jest.fn();
+      const err = 'some error';
+      const asyncFn = stopAfter(5,null,err);
+      await expect(
+        asyncRetry(asyncFn, {
+          retries: 10,
+          retryFn
+        })
+      ).resolves.toBeTruthy();
+
+      expect(retryFn).toHaveBeenCalledWith(1,new Error(err));
+      expect(retryFn).toHaveBeenCalledWith(2,new Error(err));
+      expect(retryFn).toHaveBeenCalledWith(3,new Error(err));
+      expect(retryFn).toHaveBeenCalledWith(4,new Error(err));
+    })
 
     test("should call asyncFn retries+1 times if it fails every time", async () => {
       const asyncFn = jest.fn(() => {
