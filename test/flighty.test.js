@@ -166,6 +166,29 @@ describe("Flighty", () => {
     expect(fetch.mock.calls[0][0]).toEqual(baseURI + path);
   });
 
+  test("should add a auth header", async () => {
+    const username = "flighty";
+    const password = "correct horse bettery staple";
+    const enc = Buffer.from(`${username}:${password}`).toString('base64');
+    api.auth(username,password);
+    const res = await api.get("/");
+    expect(fetch.mock.calls[0][1].headers).toHaveProperty("Authorization");
+    expect(fetch.mock.calls[0][1].headers.Authorization).toEqual(
+      `Basic ${enc}`
+    );
+  });
+
+  test("should remove an auth header", async () => {
+    const username = "flighty";
+    const password = "correct horse bettery staple";
+    const enc = Buffer.from(`${username}:${password}`).toString('base64');
+    api.auth(username,password);
+    // call auth with a falsy parameter to clear the header
+    api.auth();
+    const res = await api.get("/");
+    expect(fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+  });
+
   test("should add a JWT header", async () => {
     api.jwt("some token");
     const res = await api.get("/");
