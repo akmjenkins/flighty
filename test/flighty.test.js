@@ -200,6 +200,13 @@ describe("Flighty", () => {
       expect(api.abortTokenMap.size).toBe(0);
     });
 
+    test("should abort if a request is called with an aborted signal", async () => {
+      const c = new AbortController();
+      c.abort();
+      const res = await api.get("/",{signal:c.signal});
+      expect(fetch.mock.calls[0][1].signal.aborted).toBeTruthy();
+    })
+
     test("should abort when abort() is called with token", async () => {
       const abortToken = "some token";
       const req = api.get("/", { abortToken });

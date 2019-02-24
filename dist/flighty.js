@@ -44,7 +44,11 @@ const setupAbort = ({
 
 
   if (signal) {
-    signal.addEventListener("abort", () => abortController.abort());
+    if (signal.aborted) {
+      abortController.abort();
+    } else {
+      signal.addEventListener("abort", () => abortController.abort());
+    }
   } // when the Flighty abortController aborts, also abort this request
 
 
