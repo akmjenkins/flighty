@@ -41,7 +41,9 @@ const api = new Flighty({some options});
 const res = await api.get('/somepath',{some options});
 ```
 
-This works because Flighty returns the standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) but with the addition of the **flighty object**
+This works because Flighty returns the standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) but with the addition of the **flighty object**.
+
+The drop in replacement makes this library relatively simple to add/remove from your codebase. If you keep your use of the flighty object on the response limited to interceptors and refactoring Flighty into/out of your codebase becomes a breeze.
 
 ### flighty object
 
