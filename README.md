@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/flighty.svg?branch=master)](https://www.npmjs.com/package/flighty)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![dependencies Status](https://david-dm.org/lquixada/cross-fetch/status.svg)](https://david-dm.org/lquixada/cross-fetch)
+[![dependencies Status](https://david-dm.org/lquixada/cross-fetch/status.svg)](https://david-dm.org/akmjenkins/flighty)
 [![codecov](https://codecov.io/gh/akmjenkins/flighty/branch/master/graph/badge.svg)](https://codecov.io/gh/akmjenkins/flighty)
 [![Build Status](https://travis-ci.org/akmjenkins/flighty.svg?branch=master)](https://travis-ci.org/akmjenkins/flighty)
 
@@ -10,11 +10,11 @@ Simple (and tiny) fetch wrapper with nifty features such as intercepts, easy abo
 
 ## Motivation
 
-Various fetch-wrapping libraries have some of these features, but few (if any) have them all - retries, easy aborts, and interceptors.
+Various fetch-wrapping libraries have some of these features, but few (if any) have them all.
 
-More importantly, almost all fetch wrapping libraries I've investigated include their polyfills right in their main packages. Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch).
+More importantly, almost all fetch wrapping libraries investigated include their polyfills right in their main packages. Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch), so you don't have to bloat your code if you don't absolutely need to.
 
-So, Flighty is BYOF if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
+So, Flighty is BYOF - bring your own fetch - if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
 
 ```js
 // without polyfill
@@ -28,11 +28,11 @@ If you're using Flighty as a standalone library in the browser, you can relax, i
 
 ## Use it in unit testing
 
-The more mocks in your unit tests the worse so here's a thing - don't mock Flighty! Rather than create mocks of fetch-wrapping libraries and functionality, why not just mock the only thing you should need to - the fetch itself? I recommend [jest-fetch-mock](https://www.npmjs.com/package/jest-fetch-mock).
+Keep it short - don't mock Flighty. It'd be over-complicated and unnecessary to mock it's features - so just mock the fetch and let Flighty do it's thing in your tests. I recommend [jest-fetch-mock](https://www.npmjs.com/package/jest-fetch-mock).
 
 ## Features
 
-**_Drop in replacement_** for fetch (we're still using fetch, just wrapping it) This works:
+**_Drop in replacement_** for fetch. This works:
 
 ```js
 const res = await fetch('/somepath',{some options});
@@ -41,7 +41,7 @@ const api = new Flighty({some options});
 const res = await api.get('/somepath',{some options});
 ```
 
-This works because Flighty returns the standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) but with the addition of the 🎉**flighty object**🎉
+This works because Flighty returns the standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) but with the addition of the **flighty object**
 
 ### flighty object
 
@@ -85,10 +85,8 @@ Aborting Fetch requests comes with a hairy, verbose [AbortController](https://de
 Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` to cancel the request.
 
 ```js
-  const abortToken = "my abort token";
-  const req = flighty.get('/',{abortToken});
-
-  api.abort(abortToken);
+  const req = flighty.get('/',{abortToken:"my token"});
+  api.abort("my token");
 
   try {
     const res = await req;
@@ -97,9 +95,7 @@ Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` 
   }
 ```
 
-Tokens, like AbortController signals, can be used to abort multiple requests, but I've found it "feels" easier (IMO) to call `api.abort(someToken)` than to call `myAbortController.abort()`. If you've got multiple requests that you need manage the cancellation of independently, you've got to create and manage multiple AbortControllers - let flighty do this work for you.
-
-Like signals, a single abortToken can cancel multiple requests!
+Tokens, like AbortController signals, can be used to abort multiple requests. Let Flighty automate the creation and management of AbortController's for your requests. Just pass in a token and you're request is then easy to abort.
 
 ```js
  const abortToken = "some token";
@@ -120,10 +116,13 @@ Drop in replacement for anybody using Frisbee interceptors or [fetch-intercept](
 const interceptor = {
   request: (path,options,extra,retryCount) => {
 
-    // extra is an immutable object of the data passed in when creating the request - e.g. flighty('/mypath',{myFetchOptions},{someExtraData})
-    // it won't get changed between interceptors if you modify it.
+    // extra is an immutable object of the data passed in when
+    // creating the request - e.g. flighty('/mypath',{myFetchOptions},{someExtraData})
+    // it doesn't get changed between interceptors if you modify it.
 
-    // retryCount is the number of times this request has been retried via res.flighty.retry() - immutable
+    // retryCount is the number of times this request has been
+    // retried via res.flighty.retry() or by using the retry parameters
+    // and is also immutable between interceptors
 
 
     return [path,options];
@@ -131,12 +130,12 @@ const interceptor = {
 }
 ```
 
-Here's the full interceptor object:
+Here's an example interceptor object:
 ```js
 {
 request: function (path, options, extra, retryCount) {
-    // extra and retryCount are immutable - do what you want with them
-    // they'll be passed to each interceptor the same
+    // remember - extra and retryCount are immutable and will
+    // be passed to each interceptor the same
     return [path, options];
 },
 requestError: function (err) {
@@ -152,9 +151,33 @@ responseError: function (err) {
     return Promise.reject(err);
 }
 ```
+
 ### Retries
 
-The Flighty object has a retry method to allow you an easy way to retry a request:
+Flighty implements the same retry parameters found in [fetch-retry](https://www.npmjs.com/package/fetch-retry) but it adds two important features:
+
+1) Doesn't continue to retry if the request was aborted via an AbortController signal (or token)
+2) Add's an optional asynchronous `retryFn` that will be executed between retries
+
+#### Retry API
+
+* `retries` - the maximum number of retries to perform on a fetch (default 0 - do not retry)
+
+* `retryDelay` - a timeout in ms to wait between retries (default 1000ms)
+
+* `retryOn` - an array of HTTP status codes that you want to retry (default you only retry if there was a network error)
+
+* `retryFn` - a function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself a(nother) recipe to refresh JWTs (more at the end of this README):
+
+```js
+res = await api.get('/path-requiring-authentication',{
+  retries:1,
+  retryOn:[401],
+  retryFn:() => api.get('/path_to_refresh_you_token')
+})
+```
+
+The Flighty object also has a retry method to make it simply to retry a request:
 
 ```js
   let res;
@@ -167,31 +190,7 @@ The Flighty object has a retry method to allow you an easy way to retry a reques
   }
 ```
 
-After spending some time digging through the popular [fetch-retry](https://www.npmjs.com/package/fetch-retry) I realized it was missing two big things
-
-1) Ignore retrying if the request was aborted and
-2) That an asynchronous operation in addition to just a plain timeout would be invaluable.
-
-So Flighty's retry API is compatible with fetch-retry:
-
-* `retries` - the maximum number of retries to perform on a fetch (default 0)
-
-* `retryDelay` - a timeout in between retries (default 1000)
-
-* `retryOn` - an array of HTTP status codes that you want to retry (default you only retry if there was a network error)
-
-* `retryFn` - this added feature is key - a function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself a(nother) recipe to refresh JWTs (more at the end of this README):
-
-```js
-res = await api.get('/path-requiring-authentication',{
-  retries:1,
-  retryOn:[401],
-  retryFn:() => api.get('/path_to_refresh_you_token')
-})
-```
-
-We could've used other popular NPM retry packages but Flighty wants to the added cost of weight (did we mention Flighty's asyncRetry is tiny?) and managing dependencies (and dependencies' dependencies...)
-
+---
 
 ## API
 
@@ -217,7 +216,7 @@ Upon being invoked, `Flighty` has the following methods
 
     * `path` **required** - the path for the HTTP request (e.g. `/v1/login`, will be prefixed with the value of `baseURI` if set)
 
-    * `options` _optional_ - everything you'd pass into fetch's [init](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) plus an optional `abortToken` and the retry parameters: `retries`,`retryFn`,`retryDelay`,`retryFn`
+    * `options` _optional_ - everything you'd pass into fetch's [init](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) plus optional `abortToken` and retry parameters: `retries`,`retryFn`,`retryDelay`,`retryFn`
 
     * `extra` _optional_ object - sometimes you have some meta data about a request that you may want interceptors or other various listeners to know about. Whatever you pass in here will come out the other end attached the to `res.flighty.call` object and will also be passed along to all interceptors along the way
 
@@ -247,6 +246,9 @@ Upon being invoked, `Flighty` has the following methods
 
 For convenience, Flighty has exposed an `interceptor` property that has the same API as frisbee to register and unregister interceptors.
 
+---
+
+## Recipes
 
 ### Throw if not 2xx recipe
 
@@ -322,7 +324,7 @@ const interceptor = {
 
 ```
 
-### Another JWT Recipe with fetch-retry and Interceptors
+### Alternate JWT Recipe and Interceptors
 ```js
 const api = new Flighty();
 
@@ -348,5 +350,7 @@ const authenticatedApiRequest = (path,options,extra) => {
     }
     extra)
 };
+
+const myRequest = authenticatedApiRequest('/some-path-requiring-authentication');
 
 ```
