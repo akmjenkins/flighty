@@ -1,7 +1,7 @@
 {
   "name": "flighty",
   "version": "0.5.0",
-  "description": "Inspired by Frisbee, Bring your own fetch/polyfill. Aborts, retries, intercepts all in less than 5kb",
+  "description": "Fetch wrapper. Polyfills optional. Aborts, retries, intercepts all in less than 5kb",
   "main": "dist/flighty.js",
   "module": "src/flighty.js",
   "browser": "dist/flighty.browser.js",
