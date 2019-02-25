@@ -3,3 +3,5 @@ coverage
 dist
 src/flighty.abort.js
 src/flighty.fetch.js
+abort/index.*
+fetch/index.*
