@@ -1,5 +1,3 @@
-import 'promise-polyfill';
-import 'cross-fetch/polyfill';
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch';
 import qs from 'qs';
 import urlJoin from 'url-join';

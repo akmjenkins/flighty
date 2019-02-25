@@ -1,0 +1,7 @@
+{
+  "name": "flighty-abort",
+  "version": "0.0.0",
+  "main": "../dist/flighty.abort.js",
+  "browser": "../dist/flighty.abort.browser.min.js",
+  "module": "../src/flighty.abort.js"
+}
