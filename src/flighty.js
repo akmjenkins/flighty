@@ -3,15 +3,12 @@ import urlJoin from "url-join";
 import { setupAbort, teardownAbort } from "./abort";
 import { fetchRetry } from "./retry";
 
-if (typeof fetch === "undefined" || typeof AbortController === "undefined") {
-  let which;
-  if(typeof fetch === "undefined") {
-    which = "You're missing a fetch implementation.";
-  } else {
-    which = "You're missing an AbortController implementation.";
-  }
+if (typeof fetch === "undefined") {
+  throw new Error("You're missing a fetch implementation. Try var Flighty = require('flighty/fetch') or import Flighty from 'flighty/fetch'");
+}
 
-  throw new Error(`${which} Try var Flighty = require('flighty/fetch') or import Flighty from 'flighty/fetch'"`);
+if (typeof AbortController === "undefined") {
+  throw new Error("You're missing an AbortController implementation. Try var Flighty = require('flighty/abort') or import Flighty from 'flighty/abort'");
 }
 
 const METHODS = ["GET", "POST", "PUT", "HEAD", "OPTIONS", "DEL", "PATCH"];

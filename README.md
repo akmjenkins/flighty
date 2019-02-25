@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/akmjenkins/flighty/branch/master/graph/badge.svg)](https://codecov.io/gh/akmjenkins/flighty)
 [![Build Status](https://travis-ci.org/akmjenkins/flighty.svg?branch=master)](https://travis-ci.org/akmjenkins/flighty)
 
-Simple (and tiny) fetch wrapper with nifty features such as intercepts, ***easy*** aborts, and retries, for everywhere.
+Simple (and tiny) fetch wrapper with nifty features such as intercepts, ***easy*** aborts, and retries, for everywhere - that's browser, react-native, and ES5/6 front-ends.
 
 ## Motivation
 
@@ -14,19 +14,57 @@ Yet another fetch wrapping library? Well, various fetch-wrapping libraries have 
 
 More importantly, almost all fetch wrapping libraries investigated include their polyfills right in the main packages (or don't include polyfill's at all requiring you to find out what you're missing). Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch), so you don't have to bloat your code if you don't absolutely need to.
 
-So, Flighty is BYOF - bring your own fetch - if you use it as is, but you can always opt-in to a fetch-polyfill if you aren't sure what environment your code will ultimately be running in:
+Everything you'll need is included in Flighty, it's just a matter of figuring out what you need. Running in a fetch-unknown environment - use flighty/fetch. You know you'll already have a fetch but unsure of AbortController? Use flighty/abort. Always on the latest and greatest? Just use plain ol' flighty.
 
-```js
-// without polyfill
-import Flighty from "flighty";
+### Browser
+```
+<!-- no polyfills -->
+<script src="https://unpkg.com/flighty"></script>
 
-// with polyfill
-import Flighty from "flighty/fetch";
+<!-- fetch, abort, and promise polyfills -->
+<script src="https://unpkg.com/flighty/fetch"></script>
+
+<!-- abort only polyfill -->
+<script src="https://unpkg.com/flighty/abort"></script>
+
+
+<script>
+ // no matter which package you choose
+ var api = new Flighty({baseURI:'https://myapi.com'})
+ api.get('/somepath').then(...)
+</script>
 ```
 
-Boom, now you've got a full featured fetch-wrapping library everywhere.
+### ES5
+```js
+// no polyfill
+var Flighty = require('flighty');
 
-If you're using Flighty as a standalone library in the browser, you can relax, it weighs just **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch (and abortcontroller and promise) polyfill.
+// fetch, abort, and promise polyfills
+var Flighty = require('flighty/fetch')
+
+// abort only polyfill
+var Flighty = require('flighty/abort');
+```
+
+
+### ES6 (and React Native*)
+```js
+// no polyfill
+import Flighty from "Flighty";
+
+// fetch, abort, and promise polyfills
+import Flighty from "flighty/fetch";
+
+// abort only polyfill
+import Flighty from "flighty/abort";
+```
+
+**Note:** React Native's import from Flighty includes the AbortController polyfill. If React Native ever updates it's fetch, Flighty will remove this. If you do `import Flighty from "flighty/abort"` in React Native you'll get the same package as `import Flighty from "flighty"`, so it's recommended to do the latter.
+
+## Tiny
+
+Regardless of the package and implementation you choose, flighty is **tiny**. The biggest implementation (which is the browser build that has all polyfills) is *less than 9kb* minified and gzipped.
 
 ## Use it in unit testing
 
@@ -359,5 +397,4 @@ const authenticatedApiRequest = (path,options,extra) => {
 };
 
 const myRequest = authenticatedApiRequest('/some-path-requiring-authentication');
-
 ```

@@ -16,7 +16,6 @@ const browserPlugins = [
 ];
 
 const es5Plugins = [
-  resolve({preferBuiltins:true}),
   commonjs(),
   babel()
 ]
@@ -79,7 +78,25 @@ export default [
       sourcemap: true
     },
     external: [],
-    plugins: [polyfillAll(),...browserPlugins]
+    plugins: [
+      polyfillAll(),
+      ...browserPlugins
+    ]
+  },
+
+  //unpkg.com?
+  {
+    input: main,
+    output: {
+      file: "fetch/index.js",
+      format: "iife",
+      name: "Flighty",
+      sourcemap: true
+    },
+    external: [],
+    plugins: [
+      polyfillAll(),
+      ...browserPlugins]
   },
 
   // Other
@@ -120,13 +137,28 @@ export default [
   {
     input: main,
     output: {
-      file: "dist/flighty.abort.min.js",
-      format: "cjs"
+      file: "dist/flighty.abort.browser.min.js",
+      format: "iife",
+      name: "Flighty",
+      sourcemap: true
     },
-    external: [
-      ...Object.keys(pkg.dependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {})
-    ],
+    external: [],
+    plugins: [
+      polyfillAbort(),
+      ...browserPlugins
+    ]
+  },
+
+  // put an index.js file in abort for the benefit of unpkg.com?
+  {
+    input: main,
+    output: {
+      file: "abort/index.js",
+      format: "iife",
+      name: "Flighty",
+      sourcemap: true
+    },
+    external: [],
     plugins: [
       polyfillAbort(),
       ...browserPlugins
