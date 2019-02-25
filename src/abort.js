@@ -22,7 +22,7 @@ const setupAbort = ({ abortToken, signal }, controller, map) => {
     // allow to use a single token to cancel multiple requests
     const mapValue = map.get(abortToken) || {
       controller: abortController,
-      count: 0
+      count: 0,
     };
 
     mapValue.count++;
@@ -32,15 +32,15 @@ const setupAbort = ({ abortToken, signal }, controller, map) => {
 
   // the user has defined their own signal. We won't use it directly, but we'll listen to it
   if (signal) {
-    if(signal.aborted) {
+    if (signal.aborted) {
       abortController.abort();
     } else {
-      signal.addEventListener("abort", () => abortController.abort());
+      signal.addEventListener('abort', () => abortController.abort());
     }
   }
 
   // when the Flighty abortController aborts, also abort this request
-  controller.signal.addEventListener("abort", () => abortController.abort());
+  controller.signal.addEventListener('abort', () => abortController.abort());
   return abortController.signal;
 };
 
