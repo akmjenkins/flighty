@@ -1,3 +1,5 @@
 node_modules
 coverage
 dist
+src/flighty.abort.js
+src/flighty.fetch.js
