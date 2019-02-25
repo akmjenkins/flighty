@@ -146,7 +146,10 @@ const call = (
     return res;
   })());
 
-  return res.finally(() => teardownAbort(abortToken, context.abortTokenMap));
+  return res.finally(() => {
+    teardownAbort(abortToken, context.abortTokenMap);
+    return res;
+  });
 };
 
 export default class Flighty {
