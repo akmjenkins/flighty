@@ -253,6 +253,20 @@ export default class Flighty {
     this.interceptors.delete(interceptor);
   }
 
+  auth(username,password) {
+    const base64Implementation = string => {
+      if(typeof btoa !== "undefined") {
+        return btoa(string);
+      }
+
+      return Buffer.from(string).toString('base64');
+    }
+    this.headers = {
+      ...this.headers,
+      Authorization: username && password ? `Basic ${base64Implementation(`${username}:${password}`)}` : null
+    }
+  }
+
   jwt(token) {
     this.headers = {
       ...this.headers,

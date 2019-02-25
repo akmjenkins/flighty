@@ -26,7 +26,7 @@ import Flighty from "flighty/fetch";
 
 Boom, now you've got a full featured fetch-wrapping library everywhere.
 
-If you're using Flighty as a standalone library in the browser, you can relax, it weighs less than **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch (and abortcontroller and promise) polyfill.
+If you're using Flighty as a standalone library in the browser, you can relax, it weighs just **5kb** minified and gzipped and less than 9kb if you're supporting old-IE and want to include a fetch (and abortcontroller and promise) polyfill.
 
 ## Use it in unit testing
 
@@ -210,6 +210,8 @@ The Flighty object also has a retry method to make it simply to retry a request:
 Upon being invoked, `Flighty` has the following methods
 
 * `jwt(token)` - Set your Bearer Authorization header via this method. Pass in a token and Flighty will add the header for you, pass in something false-y and Flighty won't automatically add an auth header (in case you want to do it yourself)
+
+* `auth(username,password)` - Set your Basic Authorization header via this method. Pass in a username and password and Flighty will add the header `Authorization Basic bas64encoded username and password` for you, pass in something false-y and Flighty won't automatically add an auth header (in case you want to do it yourself)
 
 * `abort` - method that accepts an abortToken to abort specific requests.
 
