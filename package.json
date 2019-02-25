@@ -1,6 +1,6 @@
 {
   "name": "flighty",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Fetch wrapper. Polyfills optional. Aborts, retries, intercepts all in less than 5kb",
   "main": "dist/flighty.js",
   "module": "src/flighty.js",
@@ -29,7 +29,7 @@
     "url-join": "^4.0.0",
     "abortcontroller-polyfill": "^1.2.5",
     "cross-fetch": "^3.0.1",
-    "promise-polyfill": "^8.1.0"    
+    "promise-polyfill": "^8.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.3.3",
