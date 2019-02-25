@@ -47,7 +47,7 @@ const doFetch = (method, context, path, options) => {
   return fetch(fullUri, opts);
 };
 
-const call = (
+const call = async (
   method,
   context,
   { path, options },
@@ -149,10 +149,13 @@ const call = (
     return res;
   })());
 
-  return flightyRes.finally(() => {
+  try {
+    return await flightyRes;
+  } catch (err) {
+    throw err;
+  } finally {
     teardownAbort(abortToken, context.abortTokenMap);
-    return flightyRes;
-  });
+  }
 };
 
 export default class Flighty {
