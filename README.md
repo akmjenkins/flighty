@@ -240,7 +240,7 @@ The Flighty object also has a retry method to make it simply to retry a request:
 
   * `headers` - an object containing default headers to send with every request
 
-  * `arrayFormat` - how to stringify array in passed body. See [qs][qs-url] for available formats
+  * `arrayFormat` - how to stringify array in passed body. See [qs](https://www.npmjs.com/package/qs) for available formats
 
 Upon being invoked, `Flighty` has the following methods
 
