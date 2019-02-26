@@ -10,14 +10,14 @@ Simple (and tiny) fetch wrapper with nifty features such as intercepts, ***easy*
 
 ## Motivation
 
-Yet another fetch wrapping library? Well, various fetch-wrapping libraries have some of the above features, but few (if any) have them all.
+Yet another fetch wrapping library? Well, various fetch-wrapping libraries have some of the above features, but none have them all.
 
-More importantly, almost all fetch wrapping libraries investigated include their polyfills right in the main packages (or don't include polyfill's at all requiring you to find out what you're missing). Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch), so you don't have to bloat your code if you don't absolutely need to.
+More importantly, almost all fetch wrapping libraries investigated include their polyfills right in the main packages (or don't include polyfills at all requiring you to find out what you're missing). Flighty has an opt-in polyfill for [fetch](https://www.npmjs.com/package/cross-fetch) (and tiny polyfills for [AbortController](https://www.npmjs.com/package/abortcontroller-polyfill) and [ES6 promise](https://github.com/taylorhakes/promise-polyfill), because you'll likely need those, too if you don't have fetch), so you don't have to bloat your code if you don't absolutely need to.
 
-Everything you'll need is included in Flighty, it's just a matter of figuring out what you need. Running in a fetch-unknown environment - use flighty/fetch. You know you'll already have a fetch but unsure of AbortController? Use flighty/abort. Always on the latest and greatest? Just use plain ol' flighty.
+Everything you'll need is included in Flighty, it's just a matter of figuring out what you need. Running in a fetch-unknown environment - use flighty/fetch. You know you'll already have a fetch but unsure of AbortController? Use flighty/abort. Supporting the latest and greatest? Just import plain ol' flighty.
 
 ### Browser
-```
+```html
 <!-- no polyfills -->
 <script src="https://unpkg.com/flighty"></script>
 
@@ -60,15 +60,11 @@ import Flighty from "flighty/fetch";
 import Flighty from "flighty/abort";
 ```
 
-**Note:** React Native's import from Flighty includes the AbortController polyfill. If React Native ever updates it's fetch, Flighty will remove this. If you do `import Flighty from "flighty/abort"` in React Native you'll get the same package as `import Flighty from "flighty"`, so it's recommended to do the latter.
+**Note:** React Natives import from Flighty includes the AbortController polyfill. If React Native ever updates it's fetch, Flighty will remove this. If you do `import Flighty from "flighty/abort"` in React Native you'll get the same package as `import Flighty from "flighty"`, so it's recommended to do the latter.
 
 ## Tiny
 
 Regardless of the package and implementation you choose, flighty is **tiny**. The biggest implementation (which is the browser build that has all polyfills) is *less than 9kb* minified and gzipped.
-
-## Use it in unit testing
-
-Keep it short - don't mock Flighty. It'd be over-complicated and unnecessary to mock it's features - so just mock the fetch and let Flighty do it's thing in your tests. I recommend [jest-fetch-mock](https://www.npmjs.com/package/jest-fetch-mock).
 
 ## Features
 
@@ -153,7 +149,7 @@ Tokens, like AbortController signals, can be used to abort multiple requests. Le
 
 ### Interceptors
 
-Drop in replacement for anybody using Frisbee interceptors or [fetch-intercept](https://www.npmjs.com/package/fetch-intercept), but with a couple of extra things:
+Drop in replacement for anybody using [Frisbee](https://www.npmjs.com/package/frisbee) interceptors or [fetch-intercept](https://www.npmjs.com/package/fetch-intercept), but with a couple of extra things:
 
 ```js
 const interceptor = {
@@ -200,7 +196,7 @@ responseError: function (err) {
 Flighty implements the same retry parameters found in [fetch-retry](https://www.npmjs.com/package/fetch-retry) but it adds two important features:
 
 1) Doesn't continue to retry if the request was aborted via an AbortController signal (or token)
-2) Add's an optional asynchronous `retryFn` that will be executed between retries
+2) Adds an optional asynchronous `retryFn` that will be executed between retries
 
 #### Retry API
 
@@ -290,6 +286,10 @@ Upon being invoked, `Flighty` has the following methods
 * `clearInterceptors` - removes all interceptors.
 
 For convenience, Flighty has exposed an `interceptor` property that has the same API as frisbee to register and unregister interceptors.
+
+## Unit testing
+
+Keep it short - don't mock Flighty. It'd be over-complicated and unnecessary to mock it's features - so just mock the fetch and let Flighty do it's thing in your tests. I recommend [jest-fetch-mock](https://www.npmjs.com/package/jest-fetch-mock).
 
 ---
 
