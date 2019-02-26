@@ -11,7 +11,7 @@ if (typeof AbortController === 'undefined') {
   throw new Error("You're missing an AbortController implementation. Try var Flighty = require('flighty/abort') or import Flighty from 'flighty/abort'");
 }
 
-const METHODS = ['GET', 'POST', 'PUT', 'HEAD', 'OPTIONS', 'DEL', 'PATCH'];
+const METHODS = ['GET', 'POST', 'PUT', 'HEAD', 'OPTIONS', 'DEL', 'PATCH', 'OPTIONS'];
 
 const doFetch = (method, context, path, options) => {
   const opts = {
