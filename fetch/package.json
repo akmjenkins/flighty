@@ -2,6 +2,6 @@
   "name": "flighty-fetch",
   "version": "0.0.0",
   "main": "../dist/flighty.fetch.js",
-  "browser": "../dist/flighty.fetch.browser.min.js",
+  "browser": "./index.js",
   "module": "../src/flighty.fetch.js"
 }

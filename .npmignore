@@ -7,3 +7,6 @@ babel.config.js
 jest.config.js
 rollup.config.js
 setupJest.js
+yarn.lock
+.eslintignore
+.eslintrc.js
