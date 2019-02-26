@@ -3,6 +3,7 @@
 [![NPM Version](https://img.shields.io/npm/v/flighty.svg?branch=master)](https://www.npmjs.com/package/flighty)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![dependencies Status](https://david-dm.org/akmjenkins/flighty/status.svg)](https://david-dm.org/akmjenkins/flighty)
+[![install size](https://packagephobia.now.sh/badge?p=flighty)](https://packagephobia.now.sh/result?p=flighty)
 [![codecov](https://codecov.io/gh/akmjenkins/flighty/branch/master/graph/badge.svg)](https://codecov.io/gh/akmjenkins/flighty)
 [![Build Status](https://travis-ci.org/akmjenkins/flighty.svg?branch=master)](https://travis-ci.org/akmjenkins/flighty)
 
