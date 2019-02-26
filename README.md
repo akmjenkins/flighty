@@ -110,7 +110,7 @@ Aborting Fetch requests comes with a hairy, verbose [AbortController](https://de
 
 ```js
   const controller = new AbortController();
-  const req = fetch('/',{controller.signal})
+  const req = fetch('/',{signal:controller.signal})
 
   controller.abort();
 
