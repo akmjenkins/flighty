@@ -24,17 +24,22 @@ const polyfillAll = () => polyfill(
   main,
   [
     "promise-polyfill",
-    "cross-fetch/polyfill",
-    "abortcontroller-polyfill/dist/polyfill-patch-fetch"
+    CROSS_FETCH_POLYFILL,
+    ABORT_POLYFILL
   ]
 )
 
 const polyfillAbort = () => polyfill(
   main,
   [
-    "abortcontroller-polyfill/dist/polyfill-patch-fetch"
+    ABORT_POLYFILL
   ]
 )
+
+const ABORT_POLYFILL = "abortcontroller-polyfill/dist/polyfill-patch-fetch";
+const CROSS_FETCH_POLYFILL = "cross-fetch/polyfill";
+
+const EXTERNAL_POLYFILLS = [ABORT_POLYFILL,CROSS_FETCH_POLYFILL];
 
 export default [
   // With dependencies, no polyfills
@@ -44,8 +49,7 @@ export default [
     output: {
       file: "dist/flighty.browser.min.js",
       format: "iife",
-      name: "Flighty",
-      sourcemap: true
+      name: "Flighty"
     },
     external: [],
     plugins: [...browserPlugins]
@@ -59,6 +63,7 @@ export default [
       format: "cjs"
     },
     external: [
+      ...EXTERNAL_POLYFILLS,
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {})
     ],
@@ -68,30 +73,13 @@ export default [
   },
 
   // Include polyfills for fetch, promise, and AbortController
-  // Browser
-  {
-    input: main,
-    output: {
-      file: "dist/flighty.fetch.browser.min.js",
-      format: "iife",
-      name: "Flighty",
-      sourcemap: true
-    },
-    external: [],
-    plugins: [
-      polyfillAll(),
-      ...browserPlugins
-    ]
-  },
-
-  //unpkg.com?
+  // unpkg.com?
   {
     input: main,
     output: {
       file: "fetch/index.js",
       format: "iife",
-      name: "Flighty",
-      sourcemap: true
+      name: "Flighty"
     },
     external: [],
     plugins: [
@@ -107,6 +95,7 @@ export default [
       format: "cjs"
     },
     external: [
+      ...EXTERNAL_POLYFILLS,
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {})
     ],
@@ -124,6 +113,7 @@ export default [
       format: "esm"
     },
     external: [
+      ...EXTERNAL_POLYFILLS,
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {})
     ],
@@ -134,29 +124,13 @@ export default [
 
 
   // Include polyfills for AbortController
-  {
-    input: main,
-    output: {
-      file: "dist/flighty.abort.browser.min.js",
-      format: "iife",
-      name: "Flighty",
-      sourcemap: true
-    },
-    external: [],
-    plugins: [
-      polyfillAbort(),
-      ...browserPlugins
-    ]
-  },
-
   // put an index.js file in abort for the benefit of unpkg.com?
   {
     input: main,
     output: {
       file: "abort/index.js",
       format: "iife",
-      name: "Flighty",
-      sourcemap: true
+      name: "Flighty"
     },
     external: [],
     plugins: [
@@ -172,6 +146,7 @@ export default [
       format: "cjs"
     },
     external: [
+      ...EXTERNAL_POLYFILLS,
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {})
     ],
@@ -189,6 +164,7 @@ export default [
       format: "esm"
     },
     external: [
+      ...EXTERNAL_POLYFILLS,
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {})
     ],
