@@ -316,7 +316,7 @@ After:
 ```js
 const api = new Flighty();
 api.registerInterceptor({
-  response:res {
+  response:res => {
     if(!res.ok) {
       throw res;
     }
@@ -338,11 +338,11 @@ try {
 const api = new Flighty();
 
 const interceptor = {
-  request:(path,options) {
+  request: (path,options) => {
     api.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
     return [path,options]
   },
-  response:async res {
+  response: async res => {
 
     // our only job when hitting the login path is to set the tokens locally
     if(path === LOGIN_ENDPOINT) {
@@ -376,7 +376,7 @@ const api = new Flighty();
 
 // same request interceptor as before
 const interceptor = {
-  request:(path,options) {
+  request:(path,options) => {
     api.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
     return [path,options]
   }
