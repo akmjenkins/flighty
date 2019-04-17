@@ -173,22 +173,23 @@ const interceptor = {
 Here's an example interceptor object:
 ```js
 {
-request: function (path, options, extra, retryCount) {
-    // remember - extra and retryCount are immutable and will
-    // be passed to each interceptor the same
-    return [path, options];
-},
-requestError: function (err) {
-    // Handle an error occurred in the request method
-    return Promise.reject(err);
-},
-response: function (response) {
-    // do something with response (or res.flighty!)
-    return response;
-},
-responseError: function (err) {
-    // Handle error occurred in the last ran requestInterceptor, or the fetch itself
-    return Promise.reject(err);
+  request: function (path, options, extra, retryCount) {
+      // remember - extra and retryCount are immutable and will
+      // be passed to each interceptor the same
+      return [path, options];
+  },
+  requestError: function (err) {
+      // Handle an error occurred in the request method
+      return Promise.reject(err);
+  },
+  response: function (response) {
+      // do something with response (or res.flighty!)
+      return response;
+  },
+  responseError: function (err) {
+      // Handle error occurred in the last ran requestInterceptor, or the fetch itself
+      return Promise.reject(err);
+  }
 }
 ```
 
@@ -203,11 +204,13 @@ Flighty implements the same retry parameters found in [fetch-retry](https://www.
 
 * `retries` - the maximum number of retries to perform on a fetch (default 0 - do not retry)
 
-* `retryDelay` - a timeout in ms to wait between retries (default 1000ms)
+* `*retryDelay` - a timeout in ms to wait between retries (default 1000ms)
 
 * `retryOn` - an array of HTTP status codes that you want to retry (default you only retry if there was a network error)
 
-* `retryFn` - a function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself a(nother) recipe to refresh JWTs (more at the end of this README):
+* `*retryFn` - a function that gets called in between the failure and the retry. This function is `await`ed so you can do some asynchronous work before the retry. Combine this with retryOn:[401] and you've got yourself a(nother) recipe to refresh JWTs (more at the end of this README):
+
+***Note:** The `retryDelay` parameter will be ignored if `retryFn` is declared. If you're using `retryFn` it's up to you to handle the delay, if any, between retries.
 
 ```js
 res = await api.get('/path-requiring-authentication',{
@@ -399,3 +402,7 @@ const authenticatedApiRequest = (path,options,extra) => {
 
 const myRequest = authenticatedApiRequest('/some-path-requiring-authentication');
 ```
+
+## Contributing
+
+PRs and ideas welcome!
