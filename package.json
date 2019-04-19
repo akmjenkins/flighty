@@ -1,6 +1,6 @@
 {
   "name": "flighty",
-  "version": "0.8.5",
+  "version": "1.0.3",
   "description": "Fetch wrapper. Polyfills optional. Aborts, retries, intercepts all in 5kb",
   "main": "dist/flighty.js",
   "module": "src/flighty.js",
