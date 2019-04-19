@@ -31,21 +31,20 @@ Everything you'll need is included in Flighty, it's just a matter of figuring ou
 
 <script>
  // no matter which package you choose
- var api = new Flighty({baseURI:'https://myapi.com'})
- api.get('/somepath').then(...)
+ flighty.get('/somepath').then(...)
 </script>
 ```
 
 ### ES5
 ```js
 // no polyfill
-var Flighty = require('flighty');
+var Flighty = require('flighty').Flighty;
 
 // fetch, abort, and promise polyfills
-var Flighty = require('flighty/fetch')
+var Flighty = require('flighty/fetch').Flighty
 
 // abort only polyfill
-var Flighty = require('flighty/abort');
+var Flighty = require('flighty/abort').Flighty;
 ```
 
 
@@ -73,9 +72,7 @@ Regardless of the package and implementation you choose, flighty is **tiny**. Th
 
 ```js
 const res = await fetch('/somepath',{some options});
-
-const api = new Flighty({some options});
-const res = await api.get('/somepath',{some options});
+const res = await flighty.get('/somepath',{some options});
 ```
 
 This works because Flighty returns the standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) but with the addition of the **flighty object**.
@@ -126,7 +123,7 @@ Flighty allows you to pass in a token (any Symbol) and then call `abort(token)` 
 
 ```js
   const req = flighty.get('/',{abortToken:"my token"});
-  api.abort("my token");
+  flighty.abort("my token");
 
   try {
     const res = await req;
@@ -213,10 +210,10 @@ Flighty implements the same retry parameters found in [fetch-retry](https://www.
 ***Note:** The `retryDelay` parameter will be ignored if `retryFn` is declared. If you're using `retryFn` it's up to you to handle the delay, if any, between retries.
 
 ```js
-res = await api.get('/path-requiring-authentication',{
+res = await flighty.get('/path-requiring-authentication',{
   retries:1,
   retryOn:[401],
-  retryFn:() => api.get('/path_to_refresh_you_token')
+  retryFn:() => flighty.get('/path_to_refresh_you_token')
 })
 ```
 
@@ -224,8 +221,7 @@ The Flighty object also has a retry method to make it simply to retry a request:
 
 ```js
   let res;
-  const api = new Flighty();
-  res = await api.get('/');
+  res = await flighty.get('/');
 
   if(!res.ok && res.flighty.retryCount === 0) {
     // try it one more time...
@@ -237,7 +233,7 @@ The Flighty object also has a retry method to make it simply to retry a request:
 
 ## API
 
-* `Flighty` - accepts an `options` object, with the following accepted options:
+* `Flighty` - default export - accepts an `options` object, with the following accepted options:
 
   * `baseURI` - the default URI use to prefix all your paths
 
@@ -245,7 +241,10 @@ The Flighty object also has a retry method to make it simply to retry a request:
 
   * `arrayFormat` - how to stringify array in passed body. See [qs](https://www.npmjs.com/package/qs) for available formats
 
-Upon being invoked, `Flighty` has the following methods
+* `flighty` - named export - is an instance of `Flighty`. Can be used immediately via ``flighty.get(...)`. Has a `create` method that creates a new `Flighty` instance that 
+accepts the same `options` as the constructor.
+
+Instances of `Flighty` contain the following methods:
 
 * `jwt(token)` - Set your Bearer Authorization header via this method. Pass in a token and Flighty will add the header for you, pass in something false-y and Flighty won't automatically add an auth header (in case you want to do it yourself)
 
@@ -317,8 +316,7 @@ Before:
 
 After:
 ```js
-const api = new Flighty();
-api.registerInterceptor({
+flighty.registerInterceptor({
   response:res => {
     if(!res.ok) {
       throw res;
@@ -329,7 +327,7 @@ api.registerInterceptor({
 
 // Now all my responses throw if I get a non-2xx response
 try {
-  const res = await api.get('/');
+  const res = await flighty.get('/');
 } catch(e) {
   // response returned non-2xx
 }
@@ -338,11 +336,10 @@ try {
 ### JWT Recipe with retry() and Interceptors
 
 ```js
-const api = new Flighty();
 
 const interceptor = {
   request: (path,options) => {
-    api.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
+    flighty.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
     return [path,options]
   },
   response: async res => {
@@ -375,18 +372,17 @@ const interceptor = {
 
 ### Alternate JWT Recipe and Interceptors
 ```js
-const api = new Flighty();
 
 // same request interceptor as before
 const interceptor = {
   request:(path,options) => {
-    api.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
+    flighty.jwt(path === REFRESH_ENDPOINT ? myRefreshToken : myAccessToken);
     return [path,options]
   }
 }
 
 const authenticatedApiRequest = (path,options,extra) => {
-  return api(
+  return flighty(
     path,
     {
       ...options,
@@ -395,7 +391,7 @@ const authenticatedApiRequest = (path,options,extra) => {
       // if a 401 or network error is received
       retryOn:[401],
       // and request a new token in between
-      retryFn:() => api.get(REFRESH_TOKEN_ENDPOINT)
+      retryFn:() => flighty.get(REFRESH_TOKEN_ENDPOINT)
     }
     extra)
 };
