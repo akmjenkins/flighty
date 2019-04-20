@@ -50,7 +50,7 @@ export default [
     output: {
       file: 'dist/flighty.browser.min.js',
       format: 'iife',
-      name: 'Flighty',
+      name: 'flighty',
     },
     external: [],
     plugins: [...browserPlugins],
@@ -80,7 +80,7 @@ export default [
     output: {
       file: 'fetch/index.js',
       format: 'iife',
-      name: 'Flighty',
+      name: 'flighty',
     },
     external: [],
     plugins: [
@@ -131,7 +131,7 @@ export default [
     output: {
       file: 'abort/index.js',
       format: 'iife',
-      name: 'Flighty',
+      name: 'flighty',
     },
     external: [],
     plugins: [
