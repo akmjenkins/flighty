@@ -1,6 +1,1 @@
-src/flighty.abort.js
-src/flighty.fetch.js
-test
-jest.config.js
-rollup.config.js
 setupJest.js
