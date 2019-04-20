@@ -38,29 +38,29 @@ Everything you'll need is included in Flighty, it's just a matter of figuring ou
 ### ES5
 ```js
 // no polyfill
-var Flighty = require('flighty').Flighty;
+var flighty = require('flighty');
 
 // fetch, abort, and promise polyfills
-var Flighty = require('flighty/fetch').Flighty
+var flighty = require('flighty/fetch')
 
 // abort only polyfill
-var Flighty = require('flighty/abort').Flighty;
+var flighty = require('flighty/abort')
 ```
 
 
 ### ES6 (and React Native*)
 ```js
 // no polyfill
-import Flighty from "Flighty";
+import flighty from "flighty";
 
 // fetch, abort, and promise polyfills
-import Flighty from "flighty/fetch";
+import flighty from "flighty/fetch";
 
 // abort only polyfill
-import Flighty from "flighty/abort";
+import flighty from "flighty/abort";
 ```
 
-**Note:** React Natives import from Flighty includes the AbortController polyfill. If React Native ever updates it's fetch, Flighty will remove this. If you do `import Flighty from "flighty/abort"` in React Native you'll get the same package as `import Flighty from "flighty"`, so it's recommended to do the latter.
+**Note:** React Natives import from Flighty includes the AbortController polyfill. If React Native ever updates it's fetch, Flighty will remove this. If you do `import flighty from "flighty/abort"` in React Native you'll get the same package as `import flighty from "flighty"`, so it's recommended to do the latter.
 
 ## Tiny
 
@@ -233,16 +233,13 @@ The Flighty object also has a retry method to make it simply to retry a request:
 
 ## API
 
-* `Flighty` - default export - accepts an `options` object, with the following accepted options:
+* `flighty` - default export - an instance of `Flighty`. It has a `create` method that can be used to instantiate other instances of `Flighty`. The `create` method accepts an object with can contain the following options:
 
   * `baseURI` - the default URI use to prefix all your paths
 
   * `headers` - an object containing default headers to send with every request
 
   * `arrayFormat` - how to stringify array in passed body. See [qs](https://www.npmjs.com/package/qs) for available formats
-
-* `flighty` - named export - is an instance of `Flighty`. Can be used immediately via ``flighty.get(...)`. Has a `create` method that creates a new `Flighty` instance that 
-accepts the same `options` as the constructor.
 
 Instances of `Flighty` contain the following methods:
 
