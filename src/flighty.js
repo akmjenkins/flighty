@@ -11,6 +11,14 @@ if (typeof AbortController === 'undefined') {
   throw new Error("You're missing an AbortController implementation. Try var Flighty = require('flighty/abort') or import Flighty from 'flighty/abort'");
 }
 
+const isApplicationJSON = headers => Object.keys(headers).some((key) => {
+  const header = headers[key];
+  if (key.toLowerCase() === 'content-type') {
+    return header.toLowerCase().split(';')[0] === 'application/json';
+  }
+  return false;
+});
+
 const METHODS = ['GET', 'POST', 'PUT', 'HEAD', 'OPTIONS', 'DEL', 'PATCH'];
 
 const doFetch = (method, context, path, options) => {
@@ -39,7 +47,7 @@ const doFetch = (method, context, path, options) => {
     delete opts.body;
   }
 
-  if (opts.body && typeof opts.body === 'object') {
+  if (isApplicationJSON(opts.headers) && opts.body) {
     opts.body = JSON.stringify(opts.body);
   }
 
